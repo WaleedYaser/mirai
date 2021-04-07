@@ -44,6 +44,10 @@ rem parameter2: library name
   set defines=-DMIRAI_DEBUG -DMIRAI_EXPORT
 
   clang %c_filenames% %compiler_flags% -o %build_dir%%name%.dll %defines% %include_flags% %linker_flags%
+  if %ERRORLEVEL% neq 0 (
+    call :echo_error "Failed to build %name%.dll with exit code %ERRORLEVEL%"
+    exit %ERRORLEVEL%
+  )
 
   call :timer_end total_seconds
   call :echo_success "Build %name%.dll Succeeded (build time: %total_seconds%s)"
@@ -82,6 +86,10 @@ rem parameter2: executalble name
   set defines=-DMIRAI_DEBUG -DMIRAI_IMPORT
 
   clang %c_filenames% %compiler_flags% -o %build_dir%%name%.exe %defines% %include_flags% %linker_flags%
+  if %ERRORLEVEL% neq 0 (
+    call :echo_error "Failed to build %name%.exe with exit code %ERRORLEVEL%"
+    exit %ERRORLEVEL%
+  )
 
   call :timer_end total_seconds
   call :echo_success "Build %name%.exe Succeeded (build time: %total_seconds%s)"
