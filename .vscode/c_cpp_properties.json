@@ -1,0 +1,18 @@
+{
+    "version": 4,
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/engine/src/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "MIRAI_EXPORT"
+            ],
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "cStandard": "c17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ]
+}

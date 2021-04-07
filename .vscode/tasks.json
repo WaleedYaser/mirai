@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build mirai engine",
+            "type": "shell",
+            "windows": {
+                "command": "build.bat"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/engine"
+            },
+            "problemMatcher": "$gcc",
+            "group": "build"
+        },
+        {
+            "label": "build mirai playground",
+            "type": "shell",
+            "windows": {
+                "command": "build.bat"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/playground"
+            },
+            "problemMatcher": "$gcc",
+            "group": "build"
+        },
+        {
+            "label": "build mirai all",
+            "type": "shell",
+            "windows": {
+                "command": "build-all.bat"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
