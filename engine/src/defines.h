@@ -46,7 +46,9 @@ MIRAI_STATIC_ASSERT(sizeof(b32) == 4, "b32 size expected to be 4 byte");
     #ifndef _WIN64
         #error "64-bit is required on Windows!"
     #endif
-#elif
+#elif defined(__linux__) || defined(__gnu_linux__)
+    #define MIRAI_PLATFORM_LINUX 1
+#else
     #error "unsupported platform"
 #endif
 

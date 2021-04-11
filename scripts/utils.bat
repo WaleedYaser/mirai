@@ -38,7 +38,7 @@ rem parameter2: library name
     echo   %%f
   )
 
-  set compiler_flags=-g -shared -Wvarargs -Wall -Werror
+  set compiler_flags=-shared -g -Wvarargs -Wall -Werror
   set include_flags=-Isrc
   set linker_flags=-luser32
   set defines=-DMIRAI_DEBUG -DMIRAI_EXPORT
@@ -51,6 +51,7 @@ rem parameter2: library name
 
   call :timer_end total_seconds
   call :echo_success "Build %name%.dll Succeeded (build time: %total_seconds%s)"
+  REM empty line
   echo.
 
   popd & endlocal
@@ -93,6 +94,7 @@ rem parameter2: executalble name
 
   call :timer_end total_seconds
   call :echo_success "Build %name%.exe Succeeded (build time: %total_seconds%s)"
+  REM empty line
   echo.
 
   popd & endlocal
@@ -114,7 +116,7 @@ rem parameter4: out yellow color
   set "%~4=%ESC%[93m"
 exit /B 0
 
-rem echo message as error and color it in red
+rem echo error message as error and color it in red
 rem parameter1: message
 :echo_error
   call :colors default, red, green, yellow
