@@ -1,12 +1,22 @@
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+      
+      - name: install llvm and clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "10.0"
+          directory: ${{ runner.temp }}/llvm
 
       - name: build
         shell: cmd
@@ -15,6 +25,12 @@ jobs:
     runs-on: linux-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: install llvm and clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: "10.0"
+          directory: ${{ runner.temp }}/llvm
 
       - name: build
         run: bash build-all.sh
