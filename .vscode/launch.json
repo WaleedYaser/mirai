@@ -2,12 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "playground",
+            "name": "playground (windows)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/playground.exe",
             "cwd": "${workspaceFolder}/bin/",
             "console":"externalTerminal"
+        },
+        {
+            "name": "playground (linux)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/playground",
+            "cwd": "${workspaceFolder}/bin/"
         }
     ]
 }

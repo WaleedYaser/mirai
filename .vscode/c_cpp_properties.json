@@ -13,6 +13,19 @@
             "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
             "cStandard": "c17",
             "intelliSenseMode": "clang-x64"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/engine/src/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "MIRAI_EXPORT"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "intelliSenseMode": "clang-x64"
         }
     ]
 }

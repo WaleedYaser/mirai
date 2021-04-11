@@ -7,6 +7,9 @@
             "windows": {
                 "command": "build.bat"
             },
+            "linux": {
+                "command": "bash build.sh"
+            },
             "options": {
                 "cwd": "${workspaceFolder}/engine"
             },
@@ -19,6 +22,9 @@
             "windows": {
                 "command": "build.bat"
             },
+            "linux": {
+                "command": "bash build.sh"
+            },
             "options": {
                 "cwd": "${workspaceFolder}/playground"
             },
@@ -30,6 +36,9 @@
             "type": "shell",
             "windows": {
                 "command": "build-all.bat"
+            },
+            "linux": {
+                "command": "bash build-all.sh"
             },
             "options": {
                 "cwd": "${workspaceFolder}"
