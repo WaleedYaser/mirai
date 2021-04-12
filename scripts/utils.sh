@@ -7,7 +7,7 @@ clang_version() {
 # parameter1: library src directory
 # parameter2: library name
 function clang_build_library() {
-  timer_begin
+  local build_timer=$(timer_begin)
 
   local folder=$1
   local name=lib$2
@@ -35,7 +35,7 @@ function clang_build_library() {
     exit $ERRORLEVEL
   fi
 
-  local total_seconds=$(timer_end)
+  local total_seconds=$(timer_end $build_timer)
   echo_success "Build $name.so Succeeded (build time: ${total_seconds}s)"
   echo # empty line
 
@@ -46,7 +46,7 @@ function clang_build_library() {
 # parameter1: executalble src directory
 # parameter2: executalble name
 function clang_build_exec() {
-  timer_begin
+  local build_timer=$(timer_begin)
 
   local folder=$1
   local name=$2
@@ -74,7 +74,7 @@ function clang_build_exec() {
     exit $ERRORLEVEL
   fi
 
-  local total_seconds=$(timer_end)
+  local total_seconds=$(timer_end $build_timer)
   echo_success "Build $name Succeeded (build time: ${total_seconds}s)"
   echo # empty line
 
@@ -105,13 +105,17 @@ echo_success() {
   echo -e "${GREEN}$1${NOCOLOR}"
 }
 
+# begin time calculation
+# return: currnt time in nanoseconds
 timer_begin() {
-  start=$(date +%s)
+  echo $(date +%s%3N)
 }
 
+# end time calculation and return time in seconds since calling timer_begin
+# return: total_seconds
 timer_end() {
-  local end=$(date +%s)
-  echo $((end-start))
+  local end=$(date +%s%3N)
+  echo "scale=3;$((end-$1))/1000" | bc
 }
 
 # ANSI color codes

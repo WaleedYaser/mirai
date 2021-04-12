@@ -145,7 +145,7 @@ rem begin time calculation
   SET begin_time=%TIME%
 exit /B 0
 
-rem end time calculatio and return time in seconds since calling timer_begin
+rem end time calculation and return time in seconds since calling timer_begin
 rem parameter1: out total_seconds
 :timer_end
   SET end_time=%TIME%
