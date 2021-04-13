@@ -15,7 +15,7 @@ function clang_build_library() {
   local build_dir=../bin/
   mkdir -p $build_dir
 
-  pushd -q "$folder"
+  pushd "$folder" > /dev/null
   echo "$folder"
 
   local c_filenames=$(find . -type f -name "*.c")
@@ -28,7 +28,7 @@ function clang_build_library() {
   local linker_flags=""
   local defines="-DMIRAI_DEBUG -DMIRAI_IMPORT"
 
-  clang "$c_filenames" "$compiler_flags" -o "$build_dir$name.so" "$defines" "$include_flags" "$linker_flags"
+  clang $c_filenames $compiler_flags -o "$build_dir$name.so" $defines $include_flags $linker_flags
   local ERRORLEVEL=$?
   if [ $ERRORLEVEL -ne 0 ]
   then
@@ -36,11 +36,11 @@ function clang_build_library() {
     exit $ERRORLEVEL
   fi
 
-  local total_seconds="$(timer_end $build_timer)"
+  local total_seconds=$(timer_end "$build_timer")
   echo_success "Build $name.so Succeeded (build time: ${total_seconds}s)"
   echo # empty line
 
-  popd -q
+  popd &> /dev/null
 }
 
 # build executable file in debug mode and link it to engine.dll for now
@@ -54,7 +54,7 @@ function clang_build_exec() {
   local build_dir=../bin/
   mkdir -p $build_dir
 
-  pushd -q "$folder"
+  pushd "$folder" &> /dev/null
   echo "$folder"
 
   local c_filenames=$(find . -type f -name "*.c")
@@ -67,7 +67,7 @@ function clang_build_exec() {
   local linker_flags="-L$build_dir -lengine -Wl,-rpath,\$ORIGIN"
   local defines="-DMIRAI_DEBUG -DMIRAI_IMPORT"
 
-  clang "$c_filenames" "$compiler_flags" -o "$build_dir$name" "$defines" "$include_flags" "$linker_flags"
+  clang $c_filenames $compiler_flags -o "$build_dir$name" $defines $include_flags $linker_flags
   local ERRORLEVEL=$?
   if [ $ERRORLEVEL -ne 0 ]
   then
@@ -75,11 +75,11 @@ function clang_build_exec() {
     exit $ERRORLEVEL
   fi
 
-  local total_seconds="$(timer_end $build_timer)"
+  local total_seconds=$(timer_end "$build_timer")
   echo_success "Build $name Succeeded (build time: ${total_seconds}s)"
   echo # empty line
 
-  popd -q
+  popd &> /dev/null
 }
 
 # echo error message in red
