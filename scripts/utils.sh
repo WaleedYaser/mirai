@@ -28,7 +28,7 @@ function clang_build_library() {
   local linker_flags=""
   local defines="-DMIRAI_DEBUG -DMIRAI_IMPORT"
 
-  clang "$c_filenames" $compiler_flags -o "$build_dir$name.so" $defines $include_flags $linker_flags
+  $(clang $c_filenames $compiler_flags -o $build_dir$name.so $defines $include_flags $linker_flags)
   local ERRORLEVEL=$?
   if [ $ERRORLEVEL -ne 0 ]
   then
