@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * ulsefull resource for xcb
+ * https://www.x.org/releases/current/doc/libxcb/tutorial/index.html
+ */
 #include <xcb/xcb.h>
 #include <xcb/xcb_atom.h>
 
@@ -14,6 +18,7 @@ typedef struct _Platform_Window_Internal {
 
     xcb_connection_t *connection;
     xcb_window_t handle;
+    xcb_atom_t wm_delete_win;
 } _Platform_Window_Internal;
 
 Platform_Window *
@@ -44,9 +49,8 @@ platform_window_create(Platform_Window_Desc desc)
     u32 values[] = {
         screen->black_pixel,
         XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
-        XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_STRUCTURE_NOTIFY |
-        XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
-        XCB_EVENT_MASK_EXPOSURE
+        XCB_EVENT_MASK_POINTER_MOTION |
+        XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
     };
 
     xcb_create_window(
@@ -71,11 +75,37 @@ platform_window_create(Platform_Window_Desc desc)
         XCB_ATOM_WM_NAME,
         XCB_ATOM_STRING,
         8,
-        strlen(desc.title),
+        strnlen(desc.title, 512),
         desc.title
     );
 
-    xcb_flush(self->connection);
+    xcb_intern_atom_cookie_t wm_delete_cookie =
+        xcb_intern_atom(self->connection, 0, strlen("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW");
+    xcb_intern_atom_cookie_t wm_protocols_cookie =
+        xcb_intern_atom(self->connection, 0, strlen("WM_PROTOCOLS"), "WM_PROTOCOLS");
+    xcb_intern_atom_reply_t *wm_delete_reply =
+        xcb_intern_atom_reply(self->connection, wm_delete_cookie, NULL);
+    xcb_intern_atom_reply_t *wm_protocols_reply =
+        xcb_intern_atom_reply(self->connection, wm_protocols_cookie, NULL);
+    self->wm_delete_win = wm_delete_reply->atom;
+
+    xcb_change_property(
+        self->connection,
+        XCB_PROP_MODE_REPLACE,
+        self->handle,
+        wm_protocols_reply->atom,
+        4,
+        32,
+        1,
+        &wm_delete_reply->atom
+    );
+
+    if (xcb_flush(self->connection) <= 0)
+    {
+        assert(FALSE && "failed to flush connection");
+        free(self);
+        return NULL;
+    }
 
     return &self->window;
 }
@@ -88,7 +118,6 @@ platform_window_destroy(Platform_Window *window)
     xcb_destroy_window(self->connection, self->handle);
     xcb_disconnect(self->connection);
     free(window);
-    window = NULL;
 }
 
 b8
@@ -97,8 +126,7 @@ platform_window_poll(Platform_Window *window)
     _Platform_Window_Internal *self = (_Platform_Window_Internal *)window;
     memset(&self->window.last_event, 0, sizeof(self->window.last_event));
 
-    // TODO: use xcb_poll_for_event instead
-    xcb_generic_event_t *event = xcb_wait_for_event(self->connection);
+    xcb_generic_event_t *event = xcb_poll_for_event(self->connection);
     if (event == NULL)
         return FALSE;
 
@@ -121,11 +149,15 @@ platform_window_poll(Platform_Window *window)
             break;
         case XCB_CLIENT_MESSAGE:
         {
-            // TODO: handle closing window
+            xcb_client_message_event_t *cm = (xcb_client_message_event_t *)event;
+            if (cm->data.data32[0] == self->wm_delete_win)
+            {
+                self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_WINDOW_CLOSE;
+            }
             break;
         }
         default:
-            // assert(FALSE && "unhandled platform window event");
+            assert(FALSE && "unhandled platform window event");
             break;
     }
     free(event);

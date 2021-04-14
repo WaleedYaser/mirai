@@ -15,32 +15,40 @@ main(void)
         .height = 720
     });
 
-    // TODO: add game loop
-    while (platform_window_poll(window))
+    // game loop
+    b8 running = TRUE;
+    while (running)
     {
-        switch (window->last_event.type)
+        // event loop
+        while (platform_window_poll(window))
         {
-            case PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS:
-                printf("mouse press\n");
-                break;
-            case PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE:
-                printf("mouse release\n");
-                break;
-            case PLATFORM_WINDOW_EVENT_TYPE_MOUSE_MOVE:
-                printf("mouse move\n");
-                break;
-            case PLATFORM_WINDOW_EVENT_TYPE_KEY_PRESS:
-                printf("key press\n");
-                break;
-            case PLATFORM_WINDOW_EVENT_TYPE_KEY_RELEASE:
-                printf("key release\n");
-                break;
-            case PLATFORM_WINDOW_EVENT_TYPE_NONE:
-                // ignone
-                break;
-            default:
-                assert(FALSE && "unhandled platform window event");
-                break;
+            switch (window->last_event.type)
+            {
+                case PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS:
+                    printf("mouse press\n");
+                    break;
+                case PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE:
+                    printf("mouse release\n");
+                    break;
+                case PLATFORM_WINDOW_EVENT_TYPE_MOUSE_MOVE:
+                    printf("mouse move\n");
+                    break;
+                case PLATFORM_WINDOW_EVENT_TYPE_KEY_PRESS:
+                    printf("key press\n");
+                    break;
+                case PLATFORM_WINDOW_EVENT_TYPE_KEY_RELEASE:
+                    printf("key release\n");
+                    break;
+                case PLATFORM_WINDOW_EVENT_TYPE_WINDOW_CLOSE:
+                    running = FALSE;
+                    break;
+                case PLATFORM_WINDOW_EVENT_TYPE_NONE:
+                    // ignone
+                    break;
+                default:
+                    assert(FALSE && "unhandled platform window event");
+                    break;
+            }
         }
     }
 
