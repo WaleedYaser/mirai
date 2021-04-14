@@ -35,5 +35,10 @@ jobs:
           version: "10.0"
           directory: ${{ runner.temp }}/llvm
 
+      - name: install linux dependancies
+        run: |
+          sudo apt update
+          sudo apt install -y libxcb1-dev
+
       - name: build
         run: bash build-all.sh
