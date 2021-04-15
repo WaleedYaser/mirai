@@ -49,7 +49,7 @@ platform_window_create(Platform_Window_Desc desc)
     u32 values[] = {
         screen->black_pixel,
         XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
-        XCB_EVENT_MASK_POINTER_MOTION |
+        XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_STRUCTURE_NOTIFY |
         XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE
     };
 
@@ -80,9 +80,9 @@ platform_window_create(Platform_Window_Desc desc)
     );
 
     xcb_intern_atom_cookie_t wm_delete_cookie =
-        xcb_intern_atom(self->connection, 0, strlen("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW");
+        xcb_intern_atom(self->connection, 0, strnlen("WM_DELETE_WINDOW", 512), "WM_DELETE_WINDOW");
     xcb_intern_atom_cookie_t wm_protocols_cookie =
-        xcb_intern_atom(self->connection, 0, strlen("WM_PROTOCOLS"), "WM_PROTOCOLS");
+        xcb_intern_atom(self->connection, 0, strnlen("WM_PROTOCOLS", 512), "WM_PROTOCOLS");
     xcb_intern_atom_reply_t *wm_delete_reply =
         xcb_intern_atom_reply(self->connection, wm_delete_cookie, NULL);
     xcb_intern_atom_reply_t *wm_protocols_reply =
@@ -133,20 +133,88 @@ platform_window_poll(Platform_Window *window)
     switch (event->response_type & ~0x80)
     {
         case XCB_BUTTON_PRESS:
-            self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS;
+        {
+            xcb_button_press_event_t *bp = (xcb_button_press_event_t *)event;
+            switch (bp->detail)
+            {
+                case 1:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS;
+                    self->window.last_event.mouse_button_press.button = PLATFORM_MOUSE_BUTTON_LEFT;
+                    break;
+                case 2:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS;
+                    self->window.last_event.mouse_button_press.button = PLATFORM_MOUSE_BUTTON_MIDDLE;
+                    break;
+                case 3:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS;
+                    self->window.last_event.mouse_button_press.button = PLATFORM_MOUSE_BUTTON_RIGHT;
+                    break;
+                case 4:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_WHEEL_SCROLL_UP;
+                    break;
+                case 5:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_WHEEL_SCROLL_DOWN;
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
             break;
+        }
         case XCB_BUTTON_RELEASE:
-            self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE;
+        {
+            xcb_button_release_event_t *br = (xcb_button_release_event_t *)event;
+            switch (br->detail)
+            {
+                case 1:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE;
+                    self->window.last_event.mouse_button_press.button = PLATFORM_MOUSE_BUTTON_LEFT;
+                    break;
+                case 2:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE;
+                    self->window.last_event.mouse_button_press.button = PLATFORM_MOUSE_BUTTON_MIDDLE;
+                    break;
+                case 3:
+                    self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE;
+                    self->window.last_event.mouse_button_press.button = PLATFORM_MOUSE_BUTTON_RIGHT;
+                    break;
+                case 4:
+                case 5:
+                default:
+                    // do nothing
+                    break;
+            }
             break;
+        }
         case XCB_MOTION_NOTIFY:
+        {
+            xcb_motion_notify_event_t *mn = (xcb_motion_notify_event_t *)event;
             self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_MOUSE_MOVE;
+            self->window.last_event.mouse_move.x = mn->event_x;
+            self->window.last_event.mouse_move.y = mn->event_y;
             break;
+        }
         case XCB_KEY_PRESS:
+            // TODO: get pressed key
             self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_KEY_PRESS;
             break;
         case XCB_KEY_RELEASE:
+            // TODO: get released key
             self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_KEY_RELEASE;
             break;
+        case XCB_CONFIGURE_NOTIFY:
+        {
+            xcb_configure_notify_event_t *cn = (xcb_configure_notify_event_t *)event;
+            if (cn->width != self->window.width || cn->height != self->window.height)
+            {
+                self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_WINDOW_RESIZE;
+                self->window.last_event.window_resize.width = cn->width;
+                self->window.last_event.window_resize.height = cn->height;
+
+                self->window.width = cn->width;
+                self->window.height = cn->height;
+            }
+        }
         case XCB_CLIENT_MESSAGE:
         {
             xcb_client_message_event_t *cm = (xcb_client_message_event_t *)event;
@@ -156,6 +224,10 @@ platform_window_poll(Platform_Window *window)
             }
             break;
         }
+        case XCB_MAP_NOTIFY:
+        case XCB_REPARENT_NOTIFY:
+            // do nothing
+            break;
         default:
             assert(FALSE && "unhandled platform window event");
             break;
