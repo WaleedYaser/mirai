@@ -38,7 +38,7 @@ jobs:
       - name: install linux dependancies
         run: |
           sudo apt update
-          sudo apt install -y libxcb1-dev libxcb-util-dev
+          sudo apt install -y libxcb1-dev libxcb-util-dev libxcb-keysyms1-dev
 
       - name: build
         run: bash build-all.sh
