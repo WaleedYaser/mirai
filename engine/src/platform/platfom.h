@@ -2,77 +2,77 @@
 
 #include <defines.h>
 
-typedef enum PLATFORM_MOUSE_BUTTON {
-    PLATFORM_MOUSE_BUTTON_NONE,
-    PLATFORM_MOUSE_BUTTON_LEFT,
-    PLATFORM_MOUSE_BUTTON_RIGHT,
-    PLATFORM_MOUSE_BUTTON_MIDDLE,
-} PLATFORM_MOUSE_BUTTON;
+typedef enum MP_MOUSE_BUTTON {
+    MP_MOUSE_BUTTON_NONE,
+    MP_MOUSE_BUTTON_LEFT,
+    MP_MOUSE_BUTTON_RIGHT,
+    MP_MOUSE_BUTTON_MIDDLE,
+} MP_MOUSE_BUTTON;
 
-typedef enum PLATFORM_KEY {
-    PLATFORM_KEY_NONE,
+typedef enum MP_KEY {
+    MP_KEY_NONE,
     // numbers
-    PLATFORM_KEY_0,
-    PLATFORM_KEY_1,
-    PLATFORM_KEY_2,
-    PLATFORM_KEY_3,
-    PLATFORM_KEY_4,
-    PLATFORM_KEY_5,
-    PLATFORM_KEY_6,
-    PLATFORM_KEY_7,
-    PLATFORM_KEY_8,
-    PLATFORM_KEY_9,
+    MP_KEY_0,
+    MP_KEY_1,
+    MP_KEY_2,
+    MP_KEY_3,
+    MP_KEY_4,
+    MP_KEY_5,
+    MP_KEY_6,
+    MP_KEY_7,
+    MP_KEY_8,
+    MP_KEY_9,
     // letters
-    PLATFORM_KEY_A,
-    PLATFORM_KEY_B,
-    PLATFORM_KEY_C,
-    PLATFORM_KEY_D,
-    PLATFORM_KEY_E,
-    PLATFORM_KEY_F,
-    PLATFORM_KEY_G,
-    PLATFORM_KEY_H,
-    PLATFORM_KEY_I,
-    PLATFORM_KEY_J,
-    PLATFORM_KEY_K,
-    PLATFORM_KEY_L,
-    PLATFORM_KEY_M,
-    PLATFORM_KEY_N,
-    PLATFORM_KEY_O,
-    PLATFORM_KEY_P,
-    PLATFORM_KEY_Q,
-    PLATFORM_KEY_R,
-    PLATFORM_KEY_S,
-    PLATFORM_KEY_T,
-    PLATFORM_KEY_U,
-    PLATFORM_KEY_V,
-    PLATFORM_KEY_W,
-    PLATFORM_KEY_X,
-    PLATFORM_KEY_Y,
-    PLATFORM_KEY_Z,
+    MP_KEY_A,
+    MP_KEY_B,
+    MP_KEY_C,
+    MP_KEY_D,
+    MP_KEY_E,
+    MP_KEY_F,
+    MP_KEY_G,
+    MP_KEY_H,
+    MP_KEY_I,
+    MP_KEY_J,
+    MP_KEY_K,
+    MP_KEY_L,
+    MP_KEY_M,
+    MP_KEY_N,
+    MP_KEY_O,
+    MP_KEY_P,
+    MP_KEY_Q,
+    MP_KEY_R,
+    MP_KEY_S,
+    MP_KEY_T,
+    MP_KEY_U,
+    MP_KEY_V,
+    MP_KEY_W,
+    MP_KEY_X,
+    MP_KEY_Y,
+    MP_KEY_Z,
     // special keys
-    PLATFORM_KEY_SPACE,
-    PLATFORM_KEY_ENTER,
-    PLATFORM_KEY_ESCAPE,
-} PLATFORM_KEY;
+    MP_KEY_SPACE,
+    MP_KEY_ENTER,
+    MP_KEY_ESCAPE,
+} MP_KEY;
 
-typedef enum PLATFORM_WINDOW_EVENT_TYPE {
-    PLATFORM_WINDOW_EVENT_TYPE_NONE,
-    PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS,
-    PLATFORM_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE,
-    PLATFORM_WINDOW_EVENT_TYPE_MOUSE_WHEEL_SCROLL_DOWN,
-    PLATFORM_WINDOW_EVENT_TYPE_MOUSE_WHEEL_SCROLL_UP,
-    PLATFORM_WINDOW_EVENT_TYPE_MOUSE_MOVE,
-    PLATFORM_WINDOW_EVENT_TYPE_KEY_PRESS,
-    PLATFORM_WINDOW_EVENT_TYPE_KEY_RELEASE,
-    PLATFORM_WINDOW_EVENT_TYPE_WINDOW_RESIZE,
-    PLATFORM_WINDOW_EVENT_TYPE_WINDOW_CLOSE
-} PLATFORM_WINDOW_EVENT_TYPE;
+typedef enum MP_WINDOW_EVENT_TYPE {
+    MP_WINDOW_EVENT_TYPE_NONE,
+    MP_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS,
+    MP_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE,
+    MP_WINDOW_EVENT_TYPE_MOUSE_WHEEL_SCROLL_DOWN,
+    MP_WINDOW_EVENT_TYPE_MOUSE_WHEEL_SCROLL_UP,
+    MP_WINDOW_EVENT_TYPE_MOUSE_MOVE,
+    MP_WINDOW_EVENT_TYPE_KEY_PRESS,
+    MP_WINDOW_EVENT_TYPE_KEY_RELEASE,
+    MP_WINDOW_EVENT_TYPE_WINDOW_RESIZE,
+    MP_WINDOW_EVENT_TYPE_WINDOW_CLOSE
+} MP_WINDOW_EVENT_TYPE;
 
-typedef struct Platrofm_Window_Event {
-    PLATFORM_WINDOW_EVENT_TYPE type;
+typedef struct MP_Window_Event {
+    MP_WINDOW_EVENT_TYPE type;
     union {
         struct {
-            PLATFORM_MOUSE_BUTTON button;
+            MP_MOUSE_BUTTON button;
         } mouse_button_press, mouse_button_release;
 
         struct {
@@ -80,27 +80,42 @@ typedef struct Platrofm_Window_Event {
         } mouse_move;
 
         struct {
-            PLATFORM_KEY key;
+            MP_KEY key;
         } key_press, key_release;
 
         struct {
             i32 width, height;
         } window_resize;
     };
-} Platform_Window_Event;
+} MP_Window_Event;
 
-typedef struct Platform_Window {
+typedef struct MP_Window {
     const char *title;
     i32 x, y;
     i32 width, height;
-    Platform_Window_Event last_event;
-} Platform_Window;
+    MP_Window_Event last_event;
+} MP_Window;
 
-MIRAI_API Platform_Window *
-platform_window_create(const char *title, i32 width, i32 height);
+MIRAI_API MP_Window *
+mp_window_create(const char *title, i32 width, i32 height);
 
 MIRAI_API void
-platform_window_destroy(Platform_Window *window);
+mp_window_destroy(MP_Window *window);
 
 MIRAI_API b8
-platform_window_poll(Platform_Window *window);
+mp_window_poll(MP_Window *window);
+
+typedef enum MP_COLOR {
+    MP_COLOR_FG_GRAY,
+    MP_COLOR_FG_BLUE,
+    MP_COLOR_FG_GREEN,
+    MP_COLOR_FG_YELLOW,
+    MP_COLOR_FG_RED,
+    MP_COLOR_BG_RED
+} MP_COLOR;
+
+MIRAI_API void
+mp_console_write(const char *message, MP_COLOR color);
+
+MIRAI_API void
+mp_console_write_error(const char *message, MP_COLOR color);

@@ -7,7 +7,7 @@
                 "${workspaceFolder}/engine/src/**"
             ],
             "defines": [
-                "_DEBUG",
+                "MIRAI_DEBUG",
                 "MIRAI_EXPORT"
             ],
             "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
@@ -20,7 +20,7 @@
                 "${workspaceFolder}/engine/src/**"
             ],
             "defines": [
-                "_DEBUG",
+                "MIRAI_DEBUG",
                 "MIRAI_EXPORT"
             ],
             "compilerPath": "/usr/bin/clang",
