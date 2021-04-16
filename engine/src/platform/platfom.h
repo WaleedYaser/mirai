@@ -91,7 +91,6 @@ typedef struct MP_Window_Event {
 
 typedef struct MP_Window {
     const char *title;
-    i32 x, y;
     i32 width, height;
     MP_Window_Event last_event;
 } MP_Window;

@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bin/playground.exe",
             "cwd": "${workspaceFolder}/bin/",
-            "console":"externalTerminal"
+            "console": "externalTerminal"
         },
         {
             "name": "playground (linux)",

@@ -97,8 +97,7 @@ _mp_color_to_str(MP_COLOR color)
 MP_Window *
 mp_window_create(const char *title, i32 width, i32 height)
 {
-    _MP_Window_Internal *self =
-        (_MP_Window_Internal *)malloc(sizeof(_MP_Window_Internal));
+    _MP_Window_Internal *self = (_MP_Window_Internal *)malloc(sizeof(_MP_Window_Internal));
     memset(self, 0, sizeof(*self));
 
     self->window.title = title;
@@ -197,7 +196,7 @@ mp_window_destroy(MP_Window *window)
     free(self->key_symbols);
     xcb_destroy_window(self->connection, self->handle);
     xcb_disconnect(self->connection);
-    free(window);
+    free(self);
 }
 
 b8
@@ -299,8 +298,6 @@ mp_window_poll(MP_Window *window)
                 self->window.width = cn->width;
                 self->window.height = cn->height;
             }
-            self->window.x = cn->x;
-            self->window.y = cn->y;
         }
         case XCB_CLIENT_MESSAGE:
         {
