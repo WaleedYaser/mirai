@@ -1,5 +1,7 @@
 #include "platform/platfom.h"
 
+#if defined(MIRAI_PLATFORM_LINUX)
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,8 +14,6 @@
 #include <xcb/xcb_atom.h>
 #include <xcb/xcb_keysyms.h>
 #include <X11/keysym.h>
-
-#if defined(MIRAI_PLATFORM_LINUX)
 
 typedef struct _Platform_Window_Internal {
     Platform_Window window;
@@ -78,17 +78,15 @@ _platform_key_from_xcb_keycode(_Platform_Window_Internal *self, xcb_keycode_t ke
 }
 
 Platform_Window *
-platform_window_create(Platform_Window_Desc desc)
+platform_window_create(const char *title, i32 width, i32 height)
 {
     _Platform_Window_Internal *self =
         (_Platform_Window_Internal *)malloc(sizeof(_Platform_Window_Internal));
     memset(self, 0, sizeof(*self));
 
-    self->window.title = desc.title;
-    self->window.x = desc.x;
-    self->window.y = desc.y;
-    self->window.width = desc.width;
-    self->window.height = desc.height;
+    self->window.title = title;
+    self->window.width = width;
+    self->window.height = height;
 
     self->connection = xcb_connect(NULL, NULL);
     if (xcb_connection_has_error(self->connection))
@@ -114,8 +112,8 @@ platform_window_create(Platform_Window_Desc desc)
         XCB_COPY_FROM_PARENT,
         self->handle,
         screen->root,
-        desc.x, desc.y,
-        desc.width, desc.height,
+        0, 0,
+        width, height,
         10,
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
         screen->root_visual,
@@ -131,8 +129,8 @@ platform_window_create(Platform_Window_Desc desc)
         XCB_ATOM_WM_NAME,
         XCB_ATOM_STRING,
         8,
-        strnlen(desc.title, 512),
-        desc.title
+        strnlen(title, 512),
+        title
     );
 
     xcb_intern_atom_cookie_t wm_delete_cookie =
@@ -284,6 +282,8 @@ platform_window_poll(Platform_Window *window)
                 self->window.width = cn->width;
                 self->window.height = cn->height;
             }
+            self->window.x = cn->x;
+            self->window.y = cn->y;
         }
         case XCB_CLIENT_MESSAGE:
         {

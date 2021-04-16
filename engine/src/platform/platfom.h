@@ -96,14 +96,8 @@ typedef struct Platform_Window {
     Platform_Window_Event last_event;
 } Platform_Window;
 
-typedef struct Platform_Window_Desc {
-    const char *title;
-    i32 x, y;
-    i32 width, height;
-} Platform_Window_Desc;
-
 MIRAI_API Platform_Window *
-platform_window_create(Platform_Window_Desc desc);
+platform_window_create(const char *title, i32 width, i32 height);
 
 MIRAI_API void
 platform_window_destroy(Platform_Window *window);

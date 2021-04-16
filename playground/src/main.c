@@ -48,6 +48,9 @@ platform_key_str(PLATFORM_KEY key)
         case PLATFORM_KEY_ENTER: return "enter";
         case PLATFORM_KEY_ESCAPE: return "escape";
         case PLATFORM_KEY_NONE: return "none";
+        default:
+            assert(FALSE && "unhandled platform key");
+            return "none";
     }
     return "none";
 }
@@ -55,14 +58,7 @@ platform_key_str(PLATFORM_KEY key)
 int
 main(void)
 {
-    Platform_Window *window = platform_window_create((Platform_Window_Desc){
-        .title = "mirai playground",
-        // FIXME: window position doesn't look right
-        .x = 500,
-        .y = 500,
-        .width = 1280,
-        .height = 720
-    });
+    Platform_Window *window = platform_window_create("mirai playground", 1280, 720);
 
     // game loop
     b8 running = TRUE;
