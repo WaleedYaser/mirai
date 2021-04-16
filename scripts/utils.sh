@@ -25,7 +25,7 @@ function clang_build_library() {
 
   local compiler_flags="-shared -g -Wvarargs -Wall -Werror -fPIC"
   local include_flags="-Isrc"
-  local linker_flags="-lxcb"
+  local linker_flags="-lxcb -lxcb-keysyms"
   local defines="-DMIRAI_DEBUG -DMIRAI_IMPORT"
 
   # shellcheck disable=SC2086

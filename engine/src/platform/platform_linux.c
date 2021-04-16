@@ -10,6 +10,8 @@
  */
 #include <xcb/xcb.h>
 #include <xcb/xcb_atom.h>
+#include <xcb/xcb_keysyms.h>
+#include <X11/keysym.h>
 
 #if defined(MIRAI_PLATFORM_LINUX)
 
@@ -19,7 +21,61 @@ typedef struct _Platform_Window_Internal {
     xcb_connection_t *connection;
     xcb_window_t handle;
     xcb_atom_t wm_delete_win;
+    xcb_key_symbols_t *key_symbols;
 } _Platform_Window_Internal;
+
+static PLATFORM_KEY
+_platform_key_from_xcb_keycode(_Platform_Window_Internal *self, xcb_keycode_t keycode)
+{
+    xcb_keysym_t key = xcb_key_symbols_get_keysym(self->key_symbols, keycode, 0);
+    switch (key)
+    {
+        // numbers
+        case '0': return PLATFORM_KEY_0;
+        case '1': return PLATFORM_KEY_1;
+        case '2': return PLATFORM_KEY_2;
+        case '3': return PLATFORM_KEY_3;
+        case '4': return PLATFORM_KEY_4;
+        case '5': return PLATFORM_KEY_5;
+        case '6': return PLATFORM_KEY_6;
+        case '7': return PLATFORM_KEY_7;
+        case '8': return PLATFORM_KEY_8;
+        case '9': return PLATFORM_KEY_9;
+        // letters
+        case 'a': return PLATFORM_KEY_A;
+        case 'b': return PLATFORM_KEY_B;
+        case 'c': return PLATFORM_KEY_C;
+        case 'd': return PLATFORM_KEY_D;
+        case 'e': return PLATFORM_KEY_E;
+        case 'f': return PLATFORM_KEY_F;
+        case 'g': return PLATFORM_KEY_G;
+        case 'h': return PLATFORM_KEY_H;
+        case 'i': return PLATFORM_KEY_I;
+        case 'j': return PLATFORM_KEY_J;
+        case 'k': return PLATFORM_KEY_K;
+        case 'l': return PLATFORM_KEY_L;
+        case 'm': return PLATFORM_KEY_M;
+        case 'n': return PLATFORM_KEY_N;
+        case 'o': return PLATFORM_KEY_O;
+        case 'p': return PLATFORM_KEY_P;
+        case 'q': return PLATFORM_KEY_Q;
+        case 'r': return PLATFORM_KEY_R;
+        case 's': return PLATFORM_KEY_S;
+        case 't': return PLATFORM_KEY_T;
+        case 'u': return PLATFORM_KEY_U;
+        case 'v': return PLATFORM_KEY_V;
+        case 'w': return PLATFORM_KEY_W;
+        case 'x': return PLATFORM_KEY_X;
+        case 'y': return PLATFORM_KEY_Y;
+        case 'z': return PLATFORM_KEY_Z;
+        // special keys
+        case XK_Return: return PLATFORM_KEY_ENTER;
+        case XK_Escape: return PLATFORM_KEY_ESCAPE;
+        case XK_space: return PLATFORM_KEY_SPACE;
+        default: return PLATFORM_KEY_NONE;
+    }
+    return PLATFORM_KEY_NONE;
+}
 
 Platform_Window *
 platform_window_create(Platform_Window_Desc desc)
@@ -107,6 +163,14 @@ platform_window_create(Platform_Window_Desc desc)
         return NULL;
     }
 
+    self->key_symbols = xcb_key_symbols_alloc(self->connection);
+    if (self->key_symbols == NULL)
+    {
+        assert(FALSE && "failed to allocate key sombols");
+        free(self);
+        return NULL;
+    }
+
     return &self->window;
 }
 
@@ -115,6 +179,7 @@ platform_window_destroy(Platform_Window *window)
 {
     _Platform_Window_Internal *self = (_Platform_Window_Internal *)window;
 
+    free(self->key_symbols);
     xcb_destroy_window(self->connection, self->handle);
     xcb_disconnect(self->connection);
     free(window);
@@ -195,13 +260,18 @@ platform_window_poll(Platform_Window *window)
             break;
         }
         case XCB_KEY_PRESS:
-            // TODO: get pressed key
+        {
+            xcb_key_press_event_t *kp =(xcb_key_press_event_t *)event;
             self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_KEY_PRESS;
-            break;
+            self->window.last_event.key_press.key = _platform_key_from_xcb_keycode(self, kp->detail);
+        }
         case XCB_KEY_RELEASE:
-            // TODO: get released key
+        {
+            xcb_key_release_event_t *kr =(xcb_key_release_event_t *)event;
             self->window.last_event.type = PLATFORM_WINDOW_EVENT_TYPE_KEY_RELEASE;
+            self->window.last_event.key_release.key = _platform_key_from_xcb_keycode(self, kr->detail);
             break;
+        }
         case XCB_CONFIGURE_NOTIFY:
         {
             xcb_configure_notify_event_t *cn = (xcb_configure_notify_event_t *)event;
@@ -225,6 +295,7 @@ platform_window_poll(Platform_Window *window)
             break;
         }
         case XCB_MAP_NOTIFY:
+        case XCB_MAPPING_NOTIFY:
         case XCB_REPARENT_NOTIFY:
             // do nothing
             break;
