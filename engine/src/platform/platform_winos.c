@@ -65,10 +65,9 @@ _mp_key_from_wparam(WPARAM wparam)
         case VK_SPACE: return MP_KEY_SPACE;
         default: return MP_KEY_NONE;
     }
-    return MP_KEY_NONE;
 }
 
-LRESULT CALLBACK
+static LRESULT CALLBACK
 _mp_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     _MP_Window_Internal *self = (_MP_Window_Internal *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
@@ -179,9 +178,7 @@ _mp_color_to_u8(MP_COLOR color)
         case MP_COLOR_FG_YELLOW: return 6;
         case MP_COLOR_FG_RED: return 4;
         case MP_COLOR_BG_RED: return 64;
-        default: MC_ASSERT_MSG_DEBUG(FALSE, "unexpected MP_COLOR"); return 0;
     }
-    return 0;
 }
 
 MP_Window *
@@ -195,7 +192,7 @@ mp_window_create(const char *title, i32 width, i32 height)
     self->window.height = height;
     self->style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
 
-    WNDCLASSEXA wc = {};
+    WNDCLASSEXA wc = {0};
     wc.cbSize = sizeof(wc);
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wc.lpfnWndProc = _mp_window_proc;
@@ -253,7 +250,7 @@ mp_window_poll(MP_Window *window)
     _MP_Window_Internal *self = (_MP_Window_Internal *)window;
     memset(&self->window.last_event, 0, sizeof(self->window.last_event));
 
-    MSG msg = {};
+    MSG msg = {0};
     if (PeekMessageA(&msg, self->handle, 0, 0, PM_REMOVE) == FALSE)
         return FALSE;
 
@@ -270,7 +267,7 @@ mp_console_write(const char *message, MP_COLOR color)
     SetConsoleTextAttribute(console_handle, _mp_color_to_u8(color));
     OutputDebugStringA(message);
     u64 length = strnlen(message, 2 * 1024);
-    WriteConsoleA(console_handle, message, length, NULL, NULL);
+    WriteConsoleA(console_handle, message, (DWORD)length, NULL, NULL);
 }
 
 void
@@ -280,7 +277,7 @@ mp_console_write_error(const char *message, MP_COLOR color)
     SetConsoleTextAttribute(console_handle, _mp_color_to_u8(color));
     OutputDebugStringA(message);
     u64 length = strnlen(message, 2 * 1024);
-    WriteConsoleA(console_handle, message, length, NULL, NULL);
+    WriteConsoleA(console_handle, message, (DWORD)length, NULL, NULL);
 }
 
 #endif

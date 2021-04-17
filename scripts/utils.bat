@@ -59,7 +59,7 @@ rem parameter2: library name
   set compiler_flags=-shared -g -Werror -Wvarargs -Wall -Wextra
   set include_flags=-Isrc
   set linker_flags=-luser32
-  set defines=-DMIRAI_DEBUG -DMIRAI_EXPORT
+  set defines=-DMIRAI_DEBUG=1 -DMIRAI_RELEASE=0 -DMIRAI_EXPORT=1 -DMIRAI_IMPORT=0
 
   clang %c_filenames% %compiler_flags% -o %build_dir%%name%.dll %defines% %include_flags% %linker_flags%
   if %ERRORLEVEL% neq 0 (
@@ -101,7 +101,7 @@ rem parameter2: executalble name
   set compiler_flags=-g -Werror -Wvarargs -Wall -Wextra
   set include_flags=-Isrc -I../engine/src
   set linker_flags=-L%build_dir% -lengine.lib
-  set defines=-DMIRAI_DEBUG -DMIRAI_IMPORT
+  set defines=-DMIRAI_DEBUG=1 -DMIRAI_RELEASE=0 -DMIRAI_EXPORT=0 -DMIRAI_IMPORT=1
 
   clang %c_filenames% %compiler_flags% -o %build_dir%%name%.exe %defines% %include_flags% %linker_flags%
   if %ERRORLEVEL% neq 0 (
@@ -178,9 +178,19 @@ rem parameter1: out total_seconds
   set /a mins=%end_m%-%start_m%
   set /a secs=%end_s%-%start_s%
   set /a ms=%end_ms%-%start_ms%
-  if %ms% lss 0 set /a secs = %secs% - 1 & set /a ms = 100%ms%
-  if %secs% lss 0 set /a mins = %mins% - 1 & set /a secs = 60%secs%
-  if %mins% lss 0 set /a hours = %hours% - 1 & set /a mins = 60%mins%
+
+  if %ms% lss 0 (
+    set /a secs = %secs% - 1
+    set /a ms = 100%ms%
+  )
+  if %secs% lss 0 (
+    set /a mins = %mins% - 1
+    set /a secs = 60%secs%
+  )
+  if %mins% lss 0 (
+    set /a hours = %hours% - 1
+    set /a mins = 60%mins%
+  )
   if %hours% lss 0 set /a hours = 24%hours%
   if 1%ms% lss 100 set ms=0%ms%
 
