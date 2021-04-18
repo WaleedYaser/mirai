@@ -25,7 +25,7 @@ typedef enum MC_LOG_LEVEL {
     MC_LOG_LEVEL_FATAL = 5
 } MC_LOG_LEVEL;
 
-// log formated message based on it's log level, most propaply you will not need to call this
+// log formated message based on it's log level, most propably you will not need to call this
 // function directly and will use bellow macros.
 //  level: MC_LOG_LEVEL enum to specify log level
 //  message: string to log

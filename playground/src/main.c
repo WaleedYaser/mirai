@@ -143,7 +143,7 @@ main(void)
     }
 
     mp_window_destroy(window);
-    MC_INFO("window cloesed");
+    MC_INFO("window closed");
 
     return 0;
 }

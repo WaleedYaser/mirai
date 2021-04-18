@@ -1,0 +1,23 @@
+{
+    "cSpell.words": [
+        "CREATESTRUCTA",
+        "HREDRAW",
+        "LBUTTONUP",
+        "MBUTTONDOWN",
+        "MBUTTONUP",
+        "NCCREATE",
+        "OWNDC",
+        "RBUTTONDOWN",
+        "RBUTTONUP",
+        "REPARENT",
+        "VREDRAW",
+        "WNDCLASSEXA",
+        "gwlp",
+        "hwnd",
+        "lbuttondown",
+        "lparam",
+        "lpfn",
+        "lresult",
+        "mirai"
+    ]
+}

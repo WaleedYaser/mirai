@@ -45,11 +45,11 @@ typedef i32                b32;
 #define U32_MAX ((u32)4294967295u)
 #define U64_MAX ((u64)18446744073709551615ull)
 #define F32_MAX ((f32)3.402823466e+38f)          // max value
-#define F64_MAX ((f64)1.7976931348623158e+308)   // max valueypedef i32 b32;
+#define F64_MAX ((f64)1.7976931348623158e+308)   // max value
 
 // static assertion tests an assertion at compile time
-// TODO: understand why do we need this check?
 #if defined(__clang__) || defined(__gcc__)
+    // we are using clang or gcc compilers
     #define MIRAI_STATIC_ASSERT _Static_assert
 #else
     #define MIRAI_STATIC_ASSERT static_assert
@@ -113,10 +113,12 @@ MIRAI_STATIC_ASSERT(sizeof(b32) == 4, "b32 size expected to be 4 byte");
     #error "unsupported platform"
 #endif
 
+// prefix any function you want to export with MIRAI_API so any one linking to the dll
+// or shared library can see it.
 #if defined(MIRAI_EXPORT)
     // exports
-    // TODO: understand and explain this
     #ifdef _MSC_VER
+        // we are using msvc compiler
         #define MIRAI_API __declspec(dllexport)
     #else
         #define MIRAI_API __attribute__((visibility("default")))

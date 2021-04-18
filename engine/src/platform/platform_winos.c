@@ -1,6 +1,7 @@
 #include "platform/platfom.h"
 
 #if defined(MIRAI_PLATFORM_WINOS)
+// windows specific code, we include it on windows only
 
 #include "core/asserts.h"
 #include "core/logger.h"
@@ -9,13 +10,18 @@
 #include <windowsx.h>
 #include <stdlib.h>
 
+// internal struct for window, we make MP_Window the first member in the struct so when we cast
+// between them we have the same pointer.
 typedef struct _MP_Window_Internal {
     MP_Window window;
 
+    // native handle for the window
     HWND handle;
+    // native window style
     DWORD style;
 } _MP_Window_Internal;
 
+// internal function that map between WPARAM key and MP_KEY enum
 static MP_KEY
 _mp_key_from_wparam(WPARAM wparam)
 {
@@ -67,15 +73,33 @@ _mp_key_from_wparam(WPARAM wparam)
     }
 }
 
+// internal function we pass to window class that process events of the window. it's called when we
+// DispatchMessage
 static LRESULT CALLBACK
 _mp_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    _MP_Window_Internal *self = (_MP_Window_Internal *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    // store and get pointer to _MP_WINDOW_INTERNAL state
+    _MP_Window_Internal *self = NULL;
+    if (msg == WM_NCCREATE)
+    {
+        // we get WM_NCCREATE message before WM_CREATE, in this case we store user data into handle
+        // to retrieve it later.
+        CREATESTRUCTA *create = (CREATESTRUCTA *)lparam;
+        self = (_MP_Window_Internal *)create->lpCreateParams;
+        SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)self);
+    }
+    else
+    {
+        self = (_MP_Window_Internal *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    }
 
     switch (msg)
     {
         case WM_LBUTTONDOWN:
         {
+            // SetCapture make sure that when we click inside the the window and then
+            // move cursor outside it we still get mouse events until we release the
+            // mouse.
             SetCapture(hwnd);
             self->window.last_event.type = MP_WINDOW_EVENT_TYPE_MOUSE_BUTTON_PRESS;
             self->window.last_event.mouse_button_press.button = MP_MOUSE_BUTTON_LEFT;
@@ -97,18 +121,21 @@ _mp_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         case WM_LBUTTONUP:
         {
+            ReleaseCapture();
             self->window.last_event.type = MP_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE;
             self->window.last_event.mouse_button_press.button = MP_MOUSE_BUTTON_LEFT;
             break;
         }
         case WM_MBUTTONUP:
         {
+            ReleaseCapture();
             self->window.last_event.type = MP_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE;
             self->window.last_event.mouse_button_press.button = MP_MOUSE_BUTTON_MIDDLE;
             break;
         }
         case WM_RBUTTONUP:
         {
+            ReleaseCapture();
             self->window.last_event.type = MP_WINDOW_EVENT_TYPE_MOUSE_BUTTON_RELEASE;
             self->window.last_event.mouse_button_press.button = MP_MOUSE_BUTTON_RIGHT;
             break;
@@ -144,16 +171,13 @@ _mp_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         case WM_SIZE:
         {
-            // TODO: handle resize in realtime
-            // TODO: why first time self become NULL?
-            if (self)
-            {
-                self->window.last_event.type = MP_WINDOW_EVENT_TYPE_WINDOW_RESIZE;
-                self->window.last_event.window_resize.width = LOWORD(lparam);
-                self->window.last_event.window_resize.height = HIWORD(lparam);
-                self->window.width = LOWORD(lparam);
-                self->window.height = HIWORD(lparam);
-            }
+            // TODO: handle resize in realtime, currently while we are resizing we don't
+            // get event only when we finish the resize
+            self->window.last_event.type = MP_WINDOW_EVENT_TYPE_WINDOW_RESIZE;
+            self->window.last_event.window_resize.width = LOWORD(lparam);
+            self->window.last_event.window_resize.height = HIWORD(lparam);
+            self->window.width = LOWORD(lparam);
+            self->window.height = HIWORD(lparam);
             break;
         }
         case WM_CLOSE:
@@ -167,6 +191,7 @@ _mp_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
+// internal function to map MP_COLOR to u8
 static u8
 _mp_color_to_u8(MP_COLOR color)
 {
@@ -181,6 +206,8 @@ _mp_color_to_u8(MP_COLOR color)
     }
 }
 
+// API
+
 MP_Window *
 mp_window_create(const char *title, i32 width, i32 height)
 {
@@ -192,6 +219,7 @@ mp_window_create(const char *title, i32 width, i32 height)
     self->window.height = height;
     self->style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
 
+    // create window class
     WNDCLASSEXA wc = {0};
     wc.cbSize = sizeof(wc);
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -205,20 +233,22 @@ mp_window_create(const char *title, i32 width, i32 height)
         return FALSE;
     }
 
+    // adjust width and height based on the style, taking border size for example into account
     RECT wr = {0, 0, self->window.width, self->window.height};
     AdjustWindowRect(&wr, self->style, FALSE);
 
+    // create native window
     self->handle = CreateWindowExA(
         0,
         "Mirai_Window_Class",
         title,
         self->style,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        self->window.width, self->window.height,
+        wr.right - wr.left, wr.bottom - wr.top,
         NULL,
         NULL,
         NULL,
-        NULL
+        self
     );
     if (self->handle == NULL)
     {
@@ -226,8 +256,6 @@ mp_window_create(const char *title, i32 width, i32 height)
         free(self);
         return FALSE;
     }
-
-    SetWindowLongPtrA(self->handle, GWLP_USERDATA, (LONG_PTR)self);
 
     return &self->window;
 }
@@ -250,11 +278,14 @@ mp_window_poll(MP_Window *window)
     _MP_Window_Internal *self = (_MP_Window_Internal *)window;
     memset(&self->window.last_event, 0, sizeof(self->window.last_event));
 
+    // if we don't have any message in the queue return FALSE
     MSG msg = {0};
     if (PeekMessageA(&msg, self->handle, 0, 0, PM_REMOVE) == FALSE)
         return FALSE;
 
+    // translate virtual-key messages into character messages
     TranslateMessage(&msg);
+    // dispatch message to window procedure
     DispatchMessage(&msg);
 
     return TRUE;

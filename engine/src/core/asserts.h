@@ -2,7 +2,7 @@
 
 #include "defines.h"
 
-// define/undefine based on whether you want to enable or disable assertion, most propaply you will not
+// define/undefine based on whether you want to enable or disable assertion, most propably you will not
 // need to disable it.
 #define MIRAI_ASSERTION_ENABLED
 
@@ -12,11 +12,11 @@
         // __debugbreak: causes a breakpoint in the code where the user will be prompted to run debugger.
         #define mc_debug_break() __debugbreak()
     #else
-        // __buildin_trap: not continue next instruction
+        // __builtin_trap: not continue next instruction
         #define mc_debug_break() __builtin_trap()
     #endif
 
-    // report assertion failure by logging it, most propaply you won't need to call this function outside
+    // report assertion failure by logging it, most propably you won't need to call this function outside
     // the macros defined bellow.
     //  expression: string for the failed expression
     //  message: string to log as the reason for the failure

@@ -1,5 +1,6 @@
 #include "platform/platfom.h"
 #if defined(MIRAI_PLATFORM_LINUX)
+// windows specific code, we include it on linux only
 
 #include "core/asserts.h"
 
@@ -8,7 +9,7 @@
 #include <string.h>
 
 /*
- * ulsefull resource for xcb
+ * usefull resource for xcb
  * https://www.x.org/releases/current/doc/libxcb/tutorial/index.html
  */
 #include <xcb/xcb.h>
@@ -180,7 +181,7 @@ mp_window_create(const char *title, i32 width, i32 height)
     self->key_symbols = xcb_key_symbols_alloc(self->connection);
     if (self->key_symbols == NULL)
     {
-        MC_ASSERT_MSG(FALSE, "failed to allocate key sombols");
+        MC_ASSERT_MSG(FALSE, "failed to allocate key symbols");
         free(self);
         return NULL;
     }
