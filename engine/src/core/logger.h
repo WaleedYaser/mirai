@@ -2,6 +2,7 @@
 
 #include "defines.h"
 
+// switches to enable or disable specific logging level
 #define MC_LOG_WARN_ENABLED  1
 #define MC_LOG_INFO_ENABLED  1
 #define MC_LOG_DEBUG_ENABLED 1
@@ -10,6 +11,7 @@
 #define MC_LOG_FATAL_ENABLED 1
 
 #if MIRAI_RELEASE == 1
+    // disable debug and trace logging in release mode
     #define MC_LOG_DEBUG_ENABLED 0
     #define MC_LOG_TRACE_ENABLED 0
 #endif
@@ -23,10 +25,18 @@ typedef enum MC_LOG_LEVEL {
     MC_LOG_LEVEL_FATAL = 5
 } MC_LOG_LEVEL;
 
+// log formated message based on it's log level, most propably you will not need to call this
+// function directly and will use bellow macros.
+//  level: MC_LOG_LEVEL enum to specify log level
+//  message: string to log
+//  ...: args to pass for formatting the message
 MIRAI_API void
 mc_log(MC_LOG_LEVEL level, const char *message, ...);
 
 #if MC_LOG_TRACE_ENABLED == 1
+    // __VA_ARGS__: accept variable number of arguments in macro
+    // we add '##' before __VA_ARGS__ to remove extra ',' before it if variable arguments are
+    // omitted or empty.
     #define MC_TRACE(message, ...) mc_log(MC_LOG_LEVEL_TRACE, message, ##__VA_ARGS__)
 #else
     #define MC_TRACE(message, ...) // do nothing

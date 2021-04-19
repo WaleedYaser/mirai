@@ -47,11 +47,7 @@ mp_key_str(MP_KEY key)
         case MP_KEY_ENTER: return "enter";
         case MP_KEY_ESCAPE: return "escape";
         case MP_KEY_NONE: return "none";
-        default:
-            MC_ASSERT_MSG_DEBUG(FALSE, "unexpected platform key");
-            return "none";
     }
-    return "none";
 }
 
 int
@@ -90,8 +86,6 @@ main(void)
                             MC_TRACE("middle mouse pressed");
                             break;
                         case MP_MOUSE_BUTTON_NONE:
-                        default:
-                            // do nothing
                             break;
                     }
                     break;
@@ -116,8 +110,6 @@ main(void)
                             MC_TRACE("middle mouse released");
                             break;
                         case MP_MOUSE_BUTTON_NONE:
-                        default:
-                            // do nothing
                             break;
                     }
                     break;
@@ -146,15 +138,12 @@ main(void)
                 case MP_WINDOW_EVENT_TYPE_NONE:
                     // do nothing
                     break;
-                default:
-                    MC_ASSERT_MSG_DEBUG(FALSE, "unexpected platform window event");
-                    break;
             }
         }
     }
 
     mp_window_destroy(window);
-    MC_INFO("window cloesed");
+    MC_INFO("window closed");
 
     return 0;
 }

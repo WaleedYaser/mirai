@@ -1,21 +1,29 @@
 #pragma once
 
+// unsigned int types
 typedef unsigned char      u8;
 typedef unsigned short     u16;
 typedef unsigned int       u32;
 typedef unsigned long long u64;
 
+// signed int types
 typedef signed char        i8;
 typedef signed short       i16;
 typedef signed int         i32;
 typedef signed long long   i64;
 
+// floating point types
 typedef float              f32;
 typedef double             f64;
 
+// boolean types
 typedef i8                 b8;
 typedef i32                b32;
 
+#define TRUE               1
+#define FALSE              0
+
+// types minimum limits
 #define I8_MIN  ((i8)(-128))
 #define I16_MIN ((i16)(-32767-1))
 #define I32_MIN ((i32)(-2147483647-1))
@@ -27,6 +35,7 @@ typedef i32                b32;
 #define F32_MIN ((f32)1.175494351e-38f)          // min normalized positive value
 #define F64_MIN ((f64)2.2250738585072014e-308)   // min normalized positive value
 
+// types maximum limits
 #define I8_MAX  ((i8)127)
 #define I16_MAX ((i16)32767)
 #define I32_MAX ((i32)2147483647)
@@ -36,17 +45,17 @@ typedef i32                b32;
 #define U32_MAX ((u32)4294967295u)
 #define U64_MAX ((u64)18446744073709551615ull)
 #define F32_MAX ((f32)3.402823466e+38f)          // max value
-#define F64_MAX ((f64)1.7976931348623158e+308)   // max valueypedef i32 b32;
+#define F64_MAX ((f64)1.7976931348623158e+308)   // max value
 
-#define TRUE 1
-#define FALSE 0
-
+// static assertion tests an assertion at compile time
 #if defined(__clang__) || defined(__gcc__)
+    // we are using clang or gcc compilers
     #define MIRAI_STATIC_ASSERT _Static_assert
 #else
     #define MIRAI_STATIC_ASSERT static_assert
 #endif
 
+// make sure all types has the correct size
 MIRAI_STATIC_ASSERT(sizeof(u8)  == 1, "u8 size expected to be 1 byte");
 MIRAI_STATIC_ASSERT(sizeof(u16) == 2, "u16 size expected to be 2 byte");
 MIRAI_STATIC_ASSERT(sizeof(u32) == 4, "u32 size expected to be 4 byte");
@@ -76,6 +85,7 @@ MIRAI_STATIC_ASSERT(sizeof(b32) == 4, "b32 size expected to be 4 byte");
     MIRAI_STATIC_ASSERT(U16_MIN == 0,          "U16_MIN expected to equal 0");
     MIRAI_STATIC_ASSERT(U32_MIN == 0,          "U32_MIN expected to equal 0");
     MIRAI_STATIC_ASSERT(U64_MIN == 0,          "U64_MIN expected to equal 0");
+    // TODO: this assertion doesn't work and complains about non integer comparison
     // MIRAI_STATIC_ASSERT(F32_MIN < FLT_MIN,    "F32_MIN expected to equal FLT_MIN");
     // MIRAI_STATIC_ASSERT(F64_MIN < DBL_MIN,    "F64_MIN expected to equal DBL_MIN");
 
@@ -91,6 +101,7 @@ MIRAI_STATIC_ASSERT(sizeof(b32) == 4, "b32 size expected to be 4 byte");
     // MIRAI_STATIC_ASSERT(F64_MAX < DBL_MAX,    "F64_MAX expected to equal DBL_MAX");
 #endif
 
+// platform detection
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
     #define MIRAI_PLATFORM_WINOS 1
     #ifndef _WIN64
@@ -102,13 +113,18 @@ MIRAI_STATIC_ASSERT(sizeof(b32) == 4, "b32 size expected to be 4 byte");
     #error "unsupported platform"
 #endif
 
+// prefix any function you want to export with MIRAI_API so any one linking to the dll
+// or shared library can see it.
 #if defined(MIRAI_EXPORT)
+    // exports
     #ifdef _MSC_VER
+        // we are using msvc compiler
         #define MIRAI_API __declspec(dllexport)
     #else
         #define MIRAI_API __attribute__((visibility("default")))
     #endif
 #elif defined(MIRAI_IMPORT)
+    // imports
     #ifdef _MSC_VER
         #define MIRAI_API __declspec(dllimport)
     #else
