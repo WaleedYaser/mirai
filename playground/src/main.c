@@ -1,6 +1,7 @@
 #include <platform/platfom.h>
 #include <core/logger.h>
 #include <core/asserts.h>
+#include <gfx/gfx.h>
 
 static const char *
 mp_key_str(MP_KEY key)
@@ -62,6 +63,8 @@ main(void)
 
     MC_INFO("window created with title: '%s', width: %d, and height: %d",
         window->title, window->width, window->height);
+
+    mg_init();
 
     // game loop
     b8 running = TRUE;

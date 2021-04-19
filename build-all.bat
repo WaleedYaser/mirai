@@ -16,6 +16,8 @@ rem     are relative to the current batch file.
 call scripts\utils.bat :timer_begin
 call scripts\utils.bat :echo_header "==== Compiler ===================================="
 call scripts\utils.bat :clang_version
+call scripts\utils.bat :echo_header "==== Vulkan SDK ===================================="
+call scripts\utils.bat :vulkan_sdk_path
 call scripts\utils.bat :echo_header "==== Build ======================================="
 
 call engine\build.bat
