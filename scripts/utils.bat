@@ -22,7 +22,7 @@ rem output Vulkan SDK path
 :vulkan_sdk_path
   if "%VULKAN_SDK%" == "" (
     call :echo_error "Failed to find Vulkan SDK. Make sure to install it."
-    exit %ERRORLEVEL%
+    exit 1
   )
   echo %VULKAN_SDK%
 exit /B 0
