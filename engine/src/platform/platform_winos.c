@@ -73,6 +73,21 @@ _mp_key_from_wparam(WPARAM wparam)
     }
 }
 
+// internal function to map MP_COLOR to u8
+static u8
+_mp_color_to_u8(MP_COLOR color)
+{
+    switch (color)
+    {
+        case MP_COLOR_FG_GRAY: return 8;
+        case MP_COLOR_FG_BLUE: return 1;
+        case MP_COLOR_FG_GREEN: return 2;
+        case MP_COLOR_FG_YELLOW: return 6;
+        case MP_COLOR_FG_RED: return 4;
+        case MP_COLOR_BG_RED: return 64;
+    }
+}
+
 // internal function we pass to window class that process events of the window. it's called when we
 // DispatchMessage
 static LRESULT CALLBACK
@@ -191,21 +206,6 @@ _mp_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
-// internal function to map MP_COLOR to u8
-static u8
-_mp_color_to_u8(MP_COLOR color)
-{
-    switch (color)
-    {
-        case MP_COLOR_FG_GRAY: return 8;
-        case MP_COLOR_FG_BLUE: return 1;
-        case MP_COLOR_FG_GREEN: return 2;
-        case MP_COLOR_FG_YELLOW: return 6;
-        case MP_COLOR_FG_RED: return 4;
-        case MP_COLOR_BG_RED: return 64;
-    }
-}
-
 // API
 
 MP_Window *
@@ -219,7 +219,7 @@ mp_window_create(const char *title, i32 width, i32 height)
     self->window.height = height;
     self->style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
 
-    // create window class
+    // register window class
     WNDCLASSEXA wc = {0};
     wc.cbSize = sizeof(wc);
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -239,16 +239,16 @@ mp_window_create(const char *title, i32 width, i32 height)
 
     // create native window
     self->handle = CreateWindowExA(
-        0,
-        "Mirai_Window_Class",
-        title,
-        self->style,
-        CW_USEDEFAULT, CW_USEDEFAULT,
-        wr.right - wr.left, wr.bottom - wr.top,
-        NULL,
-        NULL,
-        NULL,
-        self
+        0,                                      // optional window style
+        "Mirai_Window_Class",                   // window class
+        title,                                  // window text
+        self->style,                            // window style
+        CW_USEDEFAULT, CW_USEDEFAULT,           // position
+        wr.right - wr.left, wr.bottom - wr.top, // size
+        NULL,                                   // parent window
+        NULL,                                   // menu
+        NULL,                                   // instance handle (NULL is default instance)
+        self                                    // additional application data
     );
     if (self->handle == NULL)
     {

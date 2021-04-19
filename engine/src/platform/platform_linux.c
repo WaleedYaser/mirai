@@ -17,6 +17,8 @@
 #include <xcb/xcb_keysyms.h>
 #include <X11/keysym.h>
 
+// internal struct for window, we make MP_Window the first member in the struct so when we cast
+// between them we have the same pointer.
 typedef struct _MP_Window_Internal {
     MP_Window window;
 
@@ -26,6 +28,7 @@ typedef struct _MP_Window_Internal {
     xcb_key_symbols_t *key_symbols;
 } _MP_Window_Internal;
 
+// internal function that map between xcb_keycode_t and MP_KEY enum
 static MP_KEY
 _mp_key_from_xcb_keycode(_MP_Window_Internal *self, xcb_keycode_t keycode)
 {
@@ -76,9 +79,9 @@ _mp_key_from_xcb_keycode(_MP_Window_Internal *self, xcb_keycode_t keycode)
         case XK_space: return MP_KEY_SPACE;
         default: return MP_KEY_NONE;
     }
-    return MP_KEY_NONE;
 }
 
+// internal function to map MP_COLOR to char *
 static const char *
 _mp_color_to_str(MP_COLOR color)
 {
@@ -90,10 +93,10 @@ _mp_color_to_str(MP_COLOR color)
         case MP_COLOR_FG_YELLOW: return "1;33";
         case MP_COLOR_FG_RED: return "1;31";
         case MP_COLOR_BG_RED: return "0;41";
-        default: MC_ASSERT_MSG_DEBUG(FALSE, "unexpected MP_COLOR"); return "";
     }
-    return "";
 }
+
+// API
 
 MP_Window *
 mp_window_create(const char *title, i32 width, i32 height)
@@ -105,6 +108,7 @@ mp_window_create(const char *title, i32 width, i32 height)
     self->window.width = width;
     self->window.height = height;
 
+    // open connection to x server. use DISPLAY environment variable as the default dispaly name
     self->connection = xcb_connect(NULL, NULL);
     if (xcb_connection_has_error(self->connection))
     {
@@ -113,10 +117,17 @@ mp_window_create(const char *title, i32 width, i32 height)
         return NULL;
     }
 
+    // get the first screen
     xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(self->connection)).data;
 
     self->handle = xcb_generate_id(self->connection);
+
+    // register event types.
+    // XCB_CW_BACK_PIXEL: fill window bg with a single color
+    // XCB_CW_EVENT_MASK: required if we want to process any event
     u32 mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
+    // listen for mouse, keyboard, and window events
+    // XCB_EVENT_MASK_STRUCTURE_NOTIFY: we use this to get notified when window is closeed
     u32 values[] = {
         screen->black_pixel,
         XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE |
@@ -125,20 +136,22 @@ mp_window_create(const char *title, i32 width, i32 height)
     };
 
     xcb_create_window(
-        self->connection,
-        XCB_COPY_FROM_PARENT,
-        self->handle,
-        screen->root,
-        0, 0,
-        width, height,
-        10,
-        XCB_WINDOW_CLASS_INPUT_OUTPUT,
-        screen->root_visual,
-        mask, values
+        self->connection,               // connection
+        XCB_COPY_FROM_PARENT,           // depthe (same as root)
+        self->handle,                   // window id
+        screen->root,                   // parent window
+        0, 0,                           // position
+        width, height,                  // size
+        10,                             // border width
+        XCB_WINDOW_CLASS_INPUT_OUTPUT,  // class
+        screen->root_visual,            // visual
+        mask, values                    // masks
     );
 
+    // show window
     xcb_map_window(self->connection, self->handle);
 
+    // set window title
     xcb_change_property(
         self->connection,
         XCB_PROP_MODE_REPLACE,
@@ -150,6 +163,7 @@ mp_window_create(const char *title, i32 width, i32 height)
         title
     );
 
+    // tell server to notify us when window manager attempts to destroy the window
     xcb_intern_atom_cookie_t wm_delete_cookie =
         xcb_intern_atom(self->connection, 0, strnlen("WM_DELETE_WINDOW", 512), "WM_DELETE_WINDOW");
     xcb_intern_atom_cookie_t wm_protocols_cookie =
@@ -171,6 +185,7 @@ mp_window_create(const char *title, i32 width, i32 height)
         &wm_delete_reply->atom
     );
 
+    // flush the stream
     if (xcb_flush(self->connection) <= 0)
     {
         MC_ASSERT_MSG(FALSE, "failed to flush connection");
@@ -178,6 +193,7 @@ mp_window_create(const char *title, i32 width, i32 height)
         return NULL;
     }
 
+    // we use symbyo table to map between xcb_keycode_t and X11 keysym
     self->key_symbols = xcb_key_symbols_alloc(self->connection);
     if (self->key_symbols == NULL)
     {
@@ -206,10 +222,14 @@ mp_window_poll(MP_Window *window)
     _MP_Window_Internal *self = (_MP_Window_Internal *)window;
     memset(&self->window.last_event, 0, sizeof(self->window.last_event));
 
+    // poll next events and return FALSE if there is no unprocessed events, the event is allocated
+    // on the heap that's why we need to free it at the end.
     xcb_generic_event_t *event = xcb_poll_for_event(self->connection);
     if (event == NULL)
         return FALSE;
 
+    // the "& !0x80" is weired I know and I'm not sure why do we need this but that's what the
+    // examples do
     switch (event->response_type & ~0x80)
     {
         case XCB_BUTTON_PRESS:
