@@ -22,6 +22,9 @@ I'm trying to write a decent amount of comments to explain most of the code so I
 - Clang
 
 # Build
+
+If you are using **VS-Code** you can easily build and debug the project as I've included the required setup in `.vscode` folder.
+
 ## Windows
 - Download and install Clang (if you don't have it): https://releases.llvm.org/download.html.
 - Run `build-all.bat` which will build everything.
@@ -29,6 +32,7 @@ I'm trying to write a decent amount of comments to explain most of the code so I
 
 ## Linux
 - Install Clang and the other dependencies:
+
 ```
 sudo apt install clang libxcb1-dev libxcb-util-dev libxcb-keysyms1-dev
 ```
