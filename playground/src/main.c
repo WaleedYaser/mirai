@@ -3,7 +3,7 @@
 #include <core/asserts.h>
 #include <gfx/gfx.h>
 
-static const char *
+const char *
 mp_key_str(MP_KEY key)
 {
     switch (key)
@@ -64,7 +64,12 @@ main(void)
     MC_INFO("window created with title: '%s', width: %d, and height: %d",
         window->title, window->width, window->height);
 
-    mg_init();
+    if (!mg_create())
+    {
+        MC_FATAL("failed to initialize mirai gfx");
+        return 1;
+    }
+    MC_INFO("mirai gfx initialized successfully");
 
     // game loop
     b8 running = TRUE;
@@ -145,6 +150,8 @@ main(void)
         }
     }
 
+    mg_destroy();
+    MC_INFO("mirai gfx destoyed");
     mp_window_destroy(window);
     MC_INFO("window closed");
 
