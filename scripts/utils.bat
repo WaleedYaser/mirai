@@ -69,7 +69,7 @@ rem parameter2: library name
   rem -Wextra: more warnings
   rem -Wpedantic: all warnings demaded by strict ISO C and ISO C++
   @REM set compiler_flags=-shared -g -Werror -Weverything
-  set compiler_flags=-shared -g -Werror -Wvarargs -Wall -Wextra
+  set compiler_flags=-shared -g -Werror -Wall -Wextra
   set include_flags=-Isrc -I%VULKAN_SDK%\Include
   set linker_flags=-L%VULKAN_SDK%\Lib -luser32  -lvulkan-1
   set defines=-DMIRAI_DEBUG=1 -DMIRAI_RELEASE=0 -DMIRAI_EXPORT=1 -DMIRAI_IMPORT=0
@@ -111,7 +111,7 @@ rem parameter2: executalble name
   )
 
   @REM set compiler_flags=-g -Werror -Weverything
-  set compiler_flags=-g -Werror -Wvarargs -Wall -Wextra
+  set compiler_flags=-g -Werror -Wall -Wextra
   set include_flags=-Isrc -I../engine/src
   set linker_flags=-L%build_dir% -lengine.lib
   set defines=-DMIRAI_DEBUG=1 -DMIRAI_RELEASE=0 -DMIRAI_EXPORT=0 -DMIRAI_IMPORT=1

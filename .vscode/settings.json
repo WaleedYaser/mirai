@@ -10,6 +10,7 @@
         "RBUTTONDOWN",
         "RBUTTONUP",
         "REPARENT",
+        "VKAPI",
         "VREDRAW",
         "WNDCLASSEXA",
         "gwlp",

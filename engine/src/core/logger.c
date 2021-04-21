@@ -34,7 +34,7 @@ mc_log(MC_LOG_LEVEL level, const char *message, ...)
     {
         case MC_LOG_LEVEL_TRACE: color = MP_COLOR_FG_GRAY; break;
         case MC_LOG_LEVEL_DEBUG: color = MP_COLOR_FG_BLUE; break;
-        case MC_LOG_LEVEL_INFO:  color = MP_COLOR_FG_GRAY; break;
+        case MC_LOG_LEVEL_INFO:  color = MP_COLOR_FG_GREEN; break;
         case MC_LOG_LEVEL_WARN:  color = MP_COLOR_FG_YELLOW; break;
         case MC_LOG_LEVEL_ERROR: color = MP_COLOR_FG_RED; break;
         case MC_LOG_LEVEL_FATAL: color = MP_COLOR_BG_RED; break;
