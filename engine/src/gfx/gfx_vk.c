@@ -7,6 +7,8 @@
 
 typedef struct _MG_VK_Internal {
     VkInstance instance;
+    VkPhysicalDevice device;
+
     b8 enable_validation_layer;
     VkDebugUtilsMessengerEXT debug_messenger;
 } _MG_VK_Internal;
@@ -40,10 +42,10 @@ _mg_vk_log_available_extensions(void)
 static void
 _mg_vk_log_available_layers(void)
 {
-    u32 layers_count;
+    u32 layers_count = 0;
     vkEnumerateInstanceLayerProperties(&layers_count, NULL);
 
-    VkLayerProperties * available_layers =
+    VkLayerProperties *available_layers =
         (VkLayerProperties *)malloc(layers_count * sizeof(VkLayerProperties));
     vkEnumerateInstanceLayerProperties(&layers_count, available_layers);
 
@@ -54,6 +56,27 @@ _mg_vk_log_available_layers(void)
     }
 
     free(available_layers);
+}
+
+static void
+_mg_vk_log_physical_devices(VkInstance instance)
+{
+    u32 devices_count = 0;
+    vkEnumeratePhysicalDevices(instance, &devices_count, NULL);
+    MC_ASSERT_MSG(devices_count, "Failed to find GPUs with Vulkan support!");
+
+    VkPhysicalDevice *devices = (VkPhysicalDevice *)malloc(devices_count * sizeof(VkPhysicalDevice));
+    vkEnumeratePhysicalDevices(instance, &devices_count, devices);
+
+    MC_DEBUG("Vulkan available devices (%u):", devices_count);
+    for (u32 i = 0; i < devices_count; ++i)
+    {
+        VkPhysicalDeviceProperties device_properties;
+        vkGetPhysicalDeviceProperties(devices[i], &device_properties);
+        MC_DEBUG("\t%s", device_properties.deviceName);
+    }
+
+    free(devices);
 }
 
 static b8
@@ -205,6 +228,8 @@ mg_create()
             gfx->instance, &debug_messenger_create_info, NULL, &gfx->debug_messenger);
         MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create vulkan debug messenger");
     }
+
+    _mg_vk_log_physical_devices(gfx->instance);
 
     return TRUE;
 }
