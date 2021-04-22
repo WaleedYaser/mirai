@@ -7,7 +7,12 @@
 
 typedef struct _MG_VK_Internal {
     VkInstance instance;
-    VkPhysicalDevice device;
+    VkPhysicalDevice physical_device;
+    VkDevice device;
+    VkQueue graphics_queue;
+
+    b8 graphics_family_supported;
+    u32 graphics_family_index;
 
     b8 enable_validation_layer;
     VkDebugUtilsMessengerEXT debug_messenger;
@@ -231,6 +236,89 @@ mg_create()
 
     _mg_vk_log_physical_devices(gfx->instance);
 
+    // select physical device
+    {
+        gfx->physical_device = VK_NULL_HANDLE;
+
+        u32 devices_count = 0;
+        vkEnumeratePhysicalDevices(gfx->instance, &devices_count, NULL);
+        MC_ASSERT_MSG(devices_count, "Failed to find GPUs with Vulkan support!");
+
+        VkPhysicalDevice *devices = (VkPhysicalDevice *)malloc(devices_count * sizeof(VkPhysicalDevice));
+        vkEnumeratePhysicalDevices(gfx->instance, &devices_count, devices);
+
+        for (u32 i = 0; i < devices_count; ++i)
+        {
+            VkPhysicalDeviceProperties device_properties;
+            vkGetPhysicalDeviceProperties(devices[i], &device_properties);
+
+            VkPhysicalDeviceFeatures device_features;
+            vkGetPhysicalDeviceFeatures(devices[i], &device_features);
+
+            if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+                device_features.geometryShader)
+            {
+                gfx->physical_device = devices[i];
+            }
+        }
+        free(devices);
+
+        MC_ASSERT_MSG(gfx->physical_device != VK_NULL_HANDLE, "Failed to find a suitable GPU!");
+        VkPhysicalDeviceProperties selected_device_properties;
+        vkGetPhysicalDeviceProperties(gfx->physical_device, &selected_device_properties);
+        MC_INFO("selected physical device: %s", selected_device_properties.deviceName);
+    }
+
+    // find queue families
+    {
+        u32 queue_families_count = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(gfx->physical_device, &queue_families_count, NULL);
+
+        VkQueueFamilyProperties *queue_families =
+            (VkQueueFamilyProperties *)malloc(queue_families_count * sizeof(VkQueueFamilyProperties));
+
+        for (u32 i = 0; i < queue_families_count; ++i)
+        {
+            if (queue_families[i].queueFlags && VK_QUEUE_GRAPHICS_BIT)
+            {
+                gfx->graphics_family_supported = TRUE;
+                gfx->graphics_family_index = i;
+            }
+        }
+        free(queue_families);
+        MC_ASSERT_MSG(gfx->graphics_family_supported, "Failed to find supported graphics queue family");
+    }
+
+    // create logical device
+    {
+        f32 queue_priority = 1.0f;
+        VkDeviceQueueCreateInfo queue_create_info = {0};
+        queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queue_create_info.queueFamilyIndex = gfx->graphics_family_index;
+        queue_create_info.queueCount = 1;
+        queue_create_info.pQueuePriorities = &queue_priority;
+
+        VkPhysicalDeviceFeatures device_features = {0};
+
+        VkDeviceCreateInfo create_info = {0};
+        create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        create_info.pQueueCreateInfos = &queue_create_info;
+        create_info.queueCreateInfoCount = 1;
+        create_info.pEnabledFeatures = &device_features;
+        if (gfx->enable_validation_layer)
+        {
+            create_info.enabledLayerCount = validation_layers_count;
+            create_info.ppEnabledLayerNames = validation_layers;
+        }
+        VkResult result = vkCreateDevice(gfx->physical_device, &create_info, NULL, &gfx->device);
+        MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create logical device");
+    }
+
+    // retrieve queue handles
+    {
+        vkGetDeviceQueue(gfx->device, gfx->graphics_family_index, 0, &gfx->graphics_queue);
+    }
+
     return TRUE;
 }
 
@@ -238,6 +326,8 @@ void
 mg_destroy()
 {
     _MG_VK_Internal *gfx = _mg_vk_internal();
+
+    vkDestroyDevice(gfx->device, NULL);
 
     // destroy vulkan debug messenger
     if (gfx->enable_validation_layer)
