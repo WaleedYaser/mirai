@@ -30,7 +30,7 @@
     {                                                                   \
         if (!(expr))                                                    \
         {                                                               \
-            mn_report_assertion_failure(#expr, "", __FILE__, __LINE__); \
+            mc_report_assertion_failure(#expr, "", __FILE__, __LINE__); \
             mc_debug_break();                                           \
         }                                                               \
     }

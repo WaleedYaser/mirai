@@ -71,6 +71,9 @@ main(void)
     }
     MC_INFO("mirai gfx initialized successfully");
 
+    void *window_handle = mp_window_native_handle(window);
+    MG_Swapchain *swapchain = mg_swapchain_create(window_handle);
+
     // game loop
     b8 running = TRUE;
     while (running)
@@ -148,8 +151,11 @@ main(void)
                     break;
             }
         }
+
+        mg_swapchain_present(swapchain);
     }
 
+    mg_swapchain_destroy(swapchain);
     mg_destroy();
     MC_INFO("mirai gfx destoyed");
     mp_window_destroy(window);

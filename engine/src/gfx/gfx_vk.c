@@ -10,6 +10,7 @@ typedef struct _MG_VK_Internal {
     VkPhysicalDevice physical_device;
     VkDevice device;
     VkQueue graphics_queue;
+    // TODO: add present queue
 
     b8 graphics_family_supported;
     u32 graphics_family_index;
@@ -291,6 +292,11 @@ mg_create()
 
     // create logical device
     {
+        const char *device_extensions[] = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+        u32 device_extensions_count = sizeof(device_extensions) / sizeof(const char *);
+
         f32 queue_priority = 1.0f;
         VkDeviceQueueCreateInfo queue_create_info = {0};
         queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -310,6 +316,8 @@ mg_create()
             create_info.enabledLayerCount = validation_layers_count;
             create_info.ppEnabledLayerNames = validation_layers;
         }
+        create_info.enabledExtensionCount = device_extensions_count;
+        create_info.ppEnabledExtensionNames = device_extensions;
         VkResult result = vkCreateDevice(gfx->physical_device, &create_info, NULL, &gfx->device);
         MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create logical device");
     }
@@ -341,4 +349,163 @@ mg_destroy()
     }
 
     vkDestroyInstance(gfx->instance, NULL);
+}
+
+typedef struct MG_Swapchain {
+    VkSurfaceKHR surface;
+    VkSwapchainKHR handle;
+
+    u32 images_count;
+    VkImage images[2];
+    VkImageView views[2];
+
+    VkSemaphore image_available_semaphore;
+    VkSemaphore render_finished_semaphore;
+} MG_Swapchain;
+
+MG_Swapchain *
+mg_swapchain_create(void *window_handle)
+{
+    _MG_VK_Internal *gfx = _mg_vk_internal();
+    MG_Swapchain *swapchain = (MG_Swapchain *)malloc(sizeof(MG_Swapchain));
+
+    // create window surface
+    {
+        #if defined(MIRAI_PLATFORM_WINOS)
+            VkWin32SurfaceCreateInfoKHR create_info = {
+                .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+                .hwnd = window_handle
+            };
+            VkResult result = vkCreateWin32SurfaceKHR(
+                gfx->instance, &create_info, NULL, &swapchain->surface);
+            MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create window surface");
+        #else
+            #error "unsupported platform"
+        #endif
+    }
+    // TODO: check if different queue support presentation
+    // query for presentation support and create presentation queue
+    {
+        VkBool32 present_support = 0;
+        vkGetPhysicalDeviceSurfaceSupportKHR(
+            gfx->physical_device,
+            gfx->graphics_family_index,
+            swapchain->surface,
+            &present_support);
+        MC_ASSERT_MSG(present_support, "Graphics queue doesn't support present")
+    }
+
+    // create swapchain
+    {
+        VkSurfaceCapabilitiesKHR capabilities;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+            gfx->physical_device, swapchain->surface, &capabilities);
+
+        VkSwapchainCreateInfoKHR create_info = {
+            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+            .surface = swapchain->surface,
+            .minImageCount = capabilities.minImageCount,
+            .imageFormat = VK_FORMAT_B8G8R8A8_SRGB,
+            .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+            .imageExtent = capabilities.currentExtent,
+            .imageArrayLayers = 1,
+            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            .preTransform = capabilities.currentTransform,
+            .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+            .presentMode = VK_PRESENT_MODE_MAILBOX_KHR,
+            .clipped = VK_TRUE
+        };
+
+        VkResult result = vkCreateSwapchainKHR(gfx->device, &create_info, NULL, &swapchain->handle);
+        MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create swapchain");
+    }
+
+    // retrieve swapchain images
+    {
+        swapchain->images_count = 0;
+        vkGetSwapchainImagesKHR(gfx->device, swapchain->handle, &swapchain->images_count, NULL);
+        MC_ASSERT(swapchain->images_count == 2);
+        vkGetSwapchainImagesKHR(
+            gfx->device, swapchain->handle, &swapchain->images_count, swapchain->images);
+    }
+
+    // create image views
+    {
+        for (u32 i = 0; i < swapchain->images_count; ++i)
+        {
+            VkImageViewCreateInfo create_info = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .image = swapchain->images[i],
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = VK_FORMAT_B8G8R8A8_SRGB,
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .levelCount = 1,
+                    .layerCount = 1
+                },
+            };
+            VkResult result = vkCreateImageView(gfx->device, &create_info, NULL, &swapchain->views[i]);
+            MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create image view");
+        }
+    }
+
+    // create semaphores
+    {
+        // image available semaphore
+        {
+            VkSemaphoreCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+            VkResult result = vkCreateSemaphore(
+                gfx->device, &create_info, NULL, &swapchain->image_available_semaphore);
+            MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create semaphore");
+        }
+        // render finished semaphore
+        {
+            VkSemaphoreCreateInfo create_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+            VkResult result = vkCreateSemaphore(
+                gfx->device, &create_info, NULL, &swapchain->render_finished_semaphore);
+            MC_ASSERT_MSG(result == VK_SUCCESS, "Failed to create semaphore");
+        }
+    }
+
+    return swapchain;
+}
+
+void
+mg_swapchain_destroy(MG_Swapchain *swapchain)
+{
+    _MG_VK_Internal *gfx = _mg_vk_internal();
+
+    vkDestroySemaphore(gfx->device, swapchain->render_finished_semaphore, NULL);
+    vkDestroySemaphore(gfx->device, swapchain->image_available_semaphore, NULL);
+
+    for (u32 i = 0; i < swapchain->images_count; ++i)
+    {
+        vkDestroyImageView(gfx->device, swapchain->views[i], NULL);
+    }
+    vkDestroySwapchainKHR(gfx->device, swapchain->handle, NULL);
+    vkDestroySurfaceKHR(gfx->instance, swapchain->surface, NULL);
+    free(swapchain);
+}
+
+void
+mg_swapchain_present(MG_Swapchain *swapchain)
+{
+    _MG_VK_Internal *gfx = _mg_vk_internal();
+
+    u32 image_index;
+    vkAcquireNextImageKHR(
+        gfx->device,
+        swapchain->handle,
+        U64_MAX,
+        swapchain->image_available_semaphore,
+        VK_NULL_HANDLE,
+        &image_index);
+
+    VkPresentInfoKHR present_info = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .swapchainCount = 1,
+        .pSwapchains = &swapchain->handle,
+        .pImageIndices = &image_index
+    };
+    vkQueuePresentKHR(gfx->graphics_queue, &present_info);
 }

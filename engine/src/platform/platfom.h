@@ -120,6 +120,12 @@ mp_window_destroy(MP_Window *window);
 MIRAI_API b8
 mp_window_poll(MP_Window *window);
 
+// get window native handle as a void pointer
+//  window: pointer to the window
+//  return: void * that represents native window handle
+MIRAI_API void *
+mp_window_native_handle(MP_Window *window);
+
 // console
 
 typedef enum MP_COLOR {

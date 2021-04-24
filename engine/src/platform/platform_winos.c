@@ -291,6 +291,13 @@ mp_window_poll(MP_Window *window)
     return TRUE;
 }
 
+void *
+mp_window_native_handle(MP_Window *window)
+{
+    _MP_Window_Internal *self = (_MP_Window_Internal *)window;
+    return (void *)self->handle;
+}
+
 void
 mp_console_write(const char *message, MP_COLOR color)
 {
