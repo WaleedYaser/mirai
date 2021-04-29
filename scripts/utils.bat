@@ -18,15 +18,6 @@ rem output current clang version
   )
 exit /B 0
 
-rem output Vulkan SDK path
-:vulkan_sdk_path
-  if "%VULKAN_SDK%" == "" (
-    call :echo_error "Failed to find Vulkan SDK. Make sure to install it."
-    exit 1
-  )
-  echo %VULKAN_SDK%
-exit /B 0
-
 rem build library dll in debug mode for now
 rem parameter1: library src directory
 rem parameter2: library name
@@ -130,6 +121,55 @@ rem parameter2: executalble name
   popd & endlocal
 exit /B 0
 
+
+rem output Vulkan SDK path
+:vulkan_sdk_path
+  if "%VULKAN_SDK%" == "" (
+    call :echo_error "Failed to find Vulkan SDK. Make sure to install it."
+    exit 1
+  )
+  echo %VULKAN_SDK%
+  %VULKAN_SDK%\Bin\glslc.exe --version
+exit /B 0
+
+rem compile glsl shaders folder into spir-v
+rem parameter1: glsl shaders directory
+:glsl_compile
+  setlocal enabledelayedexpansion
+
+  call :timer_begin
+
+  set folder=%~1
+  set compile_dir=..\spv\
+  if not exist %compile_dir% mkdir %compile_dir%
+
+  pushd %folder%
+  echo %folder%
+
+  set glsl_filenames=
+  for /R %%f in (*.glsl.vert *glsl.frag) do (
+    echo   %%f
+    set glsl_filenames=!glsl_filenames! %%f
+    rem %%~nxf get file name with extension from full file path
+    rem   n: filename
+    rem   x: file extension
+    call %VULKAN_SDK%/Bin/glslc.exe %%f -Werror -o %compile_dir%%%~nxf.spv
+    rem don't know why should I use !ERRORLEVEL! instead of %ERRORLEVEL%
+    if !ERRORLEVEL! neq 0 (
+      call :echo_error "Failed to compile %%f with exit code !ERRORLEVEL!"
+      exit !ERRORLEVEL!
+    )
+  )
+
+  call :timer_end total_seconds
+  call :echo_success "Compile glsl shaders Succeeded (compile time: %total_seconds%s)"
+  REM empty line
+  echo.
+
+  popd & endlocal
+exit /B 0
+
+
 rem echo error message as error and color it in red
 rem parameter1: message
 :echo_error
@@ -160,6 +200,7 @@ rem parameter1: message
   echo %GREEN%%~1%NOCOLOR%
   endlocal
 exit /B 0
+
 
 rem begin time calculation
 :timer_begin

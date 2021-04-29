@@ -20,6 +20,7 @@ call scripts\utils.bat :echo_header "==== Vulkan SDK ===========================
 call scripts\utils.bat :vulkan_sdk_path
 call scripts\utils.bat :echo_header "==== Build ======================================="
 
+call glsl\compile.bat
 call engine\build.bat
 call playground\build.bat
 
