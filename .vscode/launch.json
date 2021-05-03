@@ -6,7 +6,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/playground.exe",
-            "cwd": "${workspaceFolder}/bin/",
+            "cwd": "${workspaceFolder}",
             "console": "externalTerminal"
         },
         {
@@ -14,7 +14,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/playground",
-            "cwd": "${workspaceFolder}/bin/"
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

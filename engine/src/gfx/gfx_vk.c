@@ -28,13 +28,19 @@ typedef struct _Mirai_Gfx {
     VkCommandPool command_pool;
     VkCommandBuffer command_buffer;
 
+    VkShaderModule vs_shader;
+    VkShaderModule fs_shader;
+
+    VkPipelineLayout pipeline_layout;
+    VkPipeline pipeline;
+
     VkSemaphore present_semaphore;
     VkSemaphore render_semaphore;
 } _Mirai_Gfx;
 
 
 Mirai_Gfx
-mg_create(void *window_handle)
+mg_create(void *window_handle, const char *vs_code, u64 vs_code_size, const char *fs_code, u64 fs_code_size)
 {
     Mirai_Gfx gfx = (Mirai_Gfx)malloc(sizeof(_Mirai_Gfx));
     memset(gfx, 0, sizeof(_Mirai_Gfx));
@@ -338,12 +344,148 @@ mg_create(void *window_handle)
         MC_ASSERT(res == VK_SUCCESS);
     }
 
+    // vertex shaders
+    {
+        VkShaderModuleCreateInfo create_info = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .codeSize = vs_code_size,
+            .pCode = (u32 *)vs_code
+        };
+
+        VkResult res = vkCreateShaderModule(
+            gfx->device, &create_info, VK_NULL_HANDLE, &gfx->vs_shader);
+        MC_ASSERT(res == VK_SUCCESS);
+    }
+
+    // fragment shaders
+    {
+        VkShaderModuleCreateInfo create_info = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .codeSize = fs_code_size,
+            .pCode = (u32 *)fs_code
+        };
+
+        VkResult res = vkCreateShaderModule(
+            gfx->device, &create_info, VK_NULL_HANDLE, &gfx->fs_shader);
+        MC_ASSERT(res == VK_SUCCESS);
+    }
+
+    // pipeline layout
+    {
+        VkPipelineLayoutCreateInfo create_info = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        };
+
+        VkResult res= vkCreatePipelineLayout(
+            gfx->device, &create_info, VK_NULL_HANDLE, &gfx->pipeline_layout);
+        MC_ASSERT(res == VK_SUCCESS);
+    }
+
+    // pipeline
+    {
+        VkPipelineShaderStageCreateInfo stages[] = {
+            [0] = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .stage = VK_SHADER_STAGE_VERTEX_BIT,
+                .module = gfx->vs_shader,
+                .pName = "main"
+            },
+            [1] = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+                .module = gfx->fs_shader,
+                .pName = "main"
+            }
+        };
+
+        VkPipelineVertexInputStateCreateInfo vertex_input_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        };
+
+        VkPipelineInputAssemblyStateCreateInfo input_assembly_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+            .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+        };
+
+        VkViewport viewport = {
+            .width = gfx->width,
+            .height = gfx->height,
+            .maxDepth = 1.0f
+        };
+
+        VkRect2D scissor = {
+            .extent = {
+                .width = gfx->width,
+                .height = gfx->height
+            }
+        };
+
+        VkPipelineViewportStateCreateInfo viewport_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+            .viewportCount = 1,
+            .pViewports = &viewport,
+            .scissorCount = 1,
+            .pScissors = &scissor
+        };
+
+        VkPipelineRasterizationStateCreateInfo rasterization_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+            .polygonMode = VK_POLYGON_MODE_FILL,
+            .cullMode = VK_CULL_MODE_BACK_BIT,
+            .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+            .lineWidth = 1.0f
+        };
+
+        VkPipelineMultisampleStateCreateInfo multisample_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+            .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
+        };
+
+        VkPipelineColorBlendAttachmentState attachment = {
+            .colorWriteMask =
+                VK_COLOR_COMPONENT_R_BIT |
+                VK_COLOR_COMPONENT_G_BIT |
+                VK_COLOR_COMPONENT_B_BIT |
+                VK_COLOR_COMPONENT_A_BIT
+        };
+
+        VkPipelineColorBlendStateCreateInfo blend_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+            .attachmentCount = 1,
+            .pAttachments = &attachment
+        };
+
+        VkGraphicsPipelineCreateInfo create_info = {
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .stageCount = sizeof(stages) / sizeof(stages[0]),
+            .pStages = stages,
+            .pVertexInputState = &vertex_input_state,
+            .pInputAssemblyState = &input_assembly_state,
+            .pViewportState = &viewport_state,
+            .pRasterizationState = &rasterization_state,
+            .pMultisampleState = &multisample_state,
+            .pColorBlendState = &blend_state,
+            .layout = gfx->pipeline_layout,
+            .renderPass = gfx->render_pass,
+        };
+
+        VkResult res = vkCreateGraphicsPipelines(
+            gfx->device, VK_NULL_HANDLE, 1, &create_info, VK_NULL_HANDLE, &gfx->pipeline);
+        MC_ASSERT(res == VK_SUCCESS);
+    }
+
     return gfx;
 }
 
 void
 mg_destroy(Mirai_Gfx gfx)
 {
+    vkDestroyPipeline(gfx->device, gfx->pipeline, VK_NULL_HANDLE);
+    vkDestroyPipelineLayout(gfx->device, gfx->pipeline_layout, VK_NULL_HANDLE);
+
+    vkDestroyShaderModule(gfx->device, gfx->fs_shader, VK_NULL_HANDLE);
+    vkDestroyShaderModule(gfx->device, gfx->vs_shader, VK_NULL_HANDLE);
+
     vkDestroySemaphore(gfx->device, gfx->render_semaphore, VK_NULL_HANDLE);
     vkDestroySemaphore(gfx->device, gfx->present_semaphore, VK_NULL_HANDLE);
 
@@ -382,7 +524,7 @@ mg_test_draw(Mirai_Gfx gfx)
 
     // begin command buffer
     {
-        res = vkResetCommandBuffer(gfx->command_buffer, 0);
+        VkResult res = vkResetCommandBuffer(gfx->command_buffer, 0);
         MC_ASSERT(res == VK_SUCCESS);
 
         VkCommandBufferBeginInfo begin_info = {
@@ -397,7 +539,7 @@ mg_test_draw(Mirai_Gfx gfx)
     // begin render pass
     {
         VkClearValue clear_value = {
-            .color = {{1.0f, 0.0f, 0.0f, 1.0f}}
+            .color = {{1.0f, 1.0f, 1.0f, 1.0f}}
         };
 
         VkRenderPassBeginInfo begin_info = {
@@ -415,12 +557,20 @@ mg_test_draw(Mirai_Gfx gfx)
         vkCmdBeginRenderPass(gfx->command_buffer, &begin_info, VK_SUBPASS_CONTENTS_INLINE);
     }
 
+    // draw triangle
+    {
+        vkCmdBindPipeline(gfx->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, gfx->pipeline);
+        vkCmdDraw(gfx->command_buffer, 3, 1, 0, 0);
+    }
+
     // end render pass
     vkCmdEndRenderPass(gfx->command_buffer);
 
     // end command buffer
-    res = vkEndCommandBuffer(gfx->command_buffer);
-    MC_ASSERT(res == VK_SUCCESS);
+    {
+        VkResult res = vkEndCommandBuffer(gfx->command_buffer);
+        MC_ASSERT(res == VK_SUCCESS);
+    }
 
     // submit command buffer to command queue
     {
@@ -441,17 +591,20 @@ mg_test_draw(Mirai_Gfx gfx)
         MC_ASSERT(res == VK_SUCCESS);
     }
 
-    VkPresentInfoKHR present_info = {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .swapchainCount = 1,
-        .pSwapchains = &gfx->swapchain,
-        .pImageIndices = &image_index,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &gfx->render_semaphore
-    };
+    // present
+    {
+        VkPresentInfoKHR present_info = {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .swapchainCount = 1,
+            .pSwapchains = &gfx->swapchain,
+            .pImageIndices = &image_index,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &gfx->render_semaphore
+        };
 
-    res = vkQueuePresentKHR(gfx->queue, &present_info);
-    MC_ASSERT(res == VK_SUCCESS);
+        VkResult res = vkQueuePresentKHR(gfx->queue, &present_info);
+        MC_ASSERT(res == VK_SUCCESS);
+    }
 
     vkQueueWaitIdle(gfx->queue);
 }

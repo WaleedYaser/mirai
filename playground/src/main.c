@@ -64,8 +64,11 @@ main(void)
     MC_INFO("window created with title: '%s', width: %d, and height: %d",
         window->title, window->width, window->height);
 
+    MP_Binary_Data vs = mp_read_file("spv/triangle.glsl.vert.spv");
+    MP_Binary_Data ps = mp_read_file("spv/triangle.glsl.frag.spv");
+
     void *window_handle = mp_window_native_handle(window);
-    Mirai_Gfx gfx = mg_create(window_handle);
+    Mirai_Gfx gfx = mg_create(window_handle, vs.data, vs.size, ps.data, ps.size);
 
     // game loop
     b8 running = TRUE;

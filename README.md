@@ -43,3 +43,4 @@ sudo apt install clang libxcb1-dev libxcb-util-dev libxcb-keysyms1-dev
 # Resources
 * [Kohi Game Engine series on YouTube.](https://www.youtube.com/playlist?list=PLv8Ddw9K0JPg1BEO-RS-0MYs423cvLVtj)
 * [Vulkan-Tutorial](https://vulkan-tutorial.com/)
+* [Vulkan-Guide](https://vkguide.dev/)

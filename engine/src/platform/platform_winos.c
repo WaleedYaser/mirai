@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 // internal struct for window, we make MP_Window the first member in the struct so when we cast
 // between them we have the same pointer.
@@ -328,6 +329,29 @@ mp_console_write_error(const char *message, MP_COLOR color)
     WriteConsoleA(console_handle, message, (DWORD)length, NULL, NULL);
 
     SetConsoleTextAttribute(console_handle, info.wAttributes);
+}
+
+
+MP_Binary_Data
+mp_read_file(const char *filename)
+{
+    MP_Binary_Data res = {0};
+
+    FILE *f = NULL;
+    errno_t error = fopen_s(&f, filename, "rb");
+    MC_ASSERT(error == 0);
+
+    MC_ASSERT(fseek(f, 0, SEEK_END) != -1);
+    res.size = ftell(f);
+    res.data = malloc(res.size);
+    MC_ASSERT(fseek(f, 0, SEEK_SET) != -1);
+
+    u64 size = fread(res.data, 1, res.size, f);
+    MC_ASSERT(size == res.size);
+
+    fclose(f);
+
+    return res;
 }
 
 #endif
