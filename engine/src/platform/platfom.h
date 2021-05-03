@@ -120,6 +120,12 @@ mp_window_destroy(MP_Window *window);
 MIRAI_API b8
 mp_window_poll(MP_Window *window);
 
+// get window native handle as a void pointer
+//  window: pointer to the window
+//  return: void * that represents native window handle
+MIRAI_API void *
+mp_window_native_handle(MP_Window *window);
+
 // console
 
 typedef enum MP_COLOR {
@@ -142,3 +148,11 @@ mp_console_write(const char *message, MP_COLOR color);
 //  color: MP_COLOR enum for the color
 MIRAI_API void
 mp_console_write_error(const char *message, MP_COLOR color);
+
+typedef struct MP_Binary_Data {
+    u64 size;
+    void *data;
+} MP_Binary_Data;
+
+MIRAI_API MP_Binary_Data
+mp_read_file(const char *filename);

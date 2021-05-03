@@ -6,7 +6,7 @@
 ![Repo Size](https://img.shields.io/github/repo-size/WaleedYaser/mirai)
 ![Lines of Code](https://img.shields.io/tokei/lines/github/WaleedYaser/mirai)
 
-Mirai is a side project I'm working on now for the purpose of learning more about game engines, rendering, and game development. I'm note sure yet what the end goal will be but hopefully it will be a game engine that has a good rendering quality and modern graphics APIs backend (Vulkan, DirectX12, ...), a simple physics engine, sound engine, and more.
+Mirai is a side project I'm working on now for the purpose of learning more about game engines, rendering, and game development. I'm not sure yet what the end goal will be but hopefully it will be a game engine that has a good rendering quality and modern graphics APIs backend (Vulkan, DirectX12, ...), a simple physics engine, sound engine, and more.
 
 I'm trying to write a decent amount of comments to explain most of the code so I make sure that I understand it well, and to help anyone reading the codebase to understand it. Please feel free to contact me if you have any questions or suggestions.
 
@@ -15,29 +15,32 @@ I'm trying to write a decent amount of comments to explain most of the code so I
 > -- <cite>Wikipedia</cite>
 
 ## Supported platforms
-- Windows
-- Linux
+* Windows
+* Linux
 
 ## Compilers
-- Clang
+* Clang
 
 # Build
 
 If you are using **VS-Code** you can easily build and debug the project as I've included the required setup in `.vscode` folder.
 
 ## Windows
-- Download and install Clang (if you don't have it): https://releases.llvm.org/download.html.
-- Run `build-all.bat` which will build everything.
-- The output will be in the `bin` folder.
+* Download and install Clang (if you don't have it): https://releases.llvm.org/download.html.
+* Download and install VulkanSDK: https://vulkan.lunarg.com/
+* Run `build-all.bat` which will build everything.
+* The output will be in the `bin` folder.
 
 ## Linux
-- Install Clang and the other dependencies:
+* Install Clang and the other dependencies:
 
 ```
 sudo apt install clang libxcb1-dev libxcb-util-dev libxcb-keysyms1-dev
 ```
-- Run `build-all.sh` which will build everything.
-- The output will be in the `bin` folder.
+* Run `build-all.sh` which will build everything.
+* The output will be in the `bin` folder.
 
 # Resources
-- [Kohi Game Engine series on YouTube.](https://www.youtube.com/playlist?list=PLv8Ddw9K0JPg1BEO-RS-0MYs423cvLVtj)
+* [Kohi Game Engine series on YouTube.](https://www.youtube.com/playlist?list=PLv8Ddw9K0JPg1BEO-RS-0MYs423cvLVtj)
+* [Vulkan-Tutorial](https://vulkan-tutorial.com/)
+* [Vulkan-Guide](https://vkguide.dev/)

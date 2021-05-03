@@ -4,7 +4,9 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/engine/src/**"
+                "${workspaceFolder}/engine/src/**",
+                "${VULKAN_SDK}/Include"
+
             ],
             "defines": [
                 "MIRAI_DEBUG",

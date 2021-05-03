@@ -12,6 +12,10 @@ exit /B %ERRORLEVEL%
 rem output current clang version
 :clang_version
   clang -v
+  if %ERRORLEVEL% neq 0 (
+    call :echo_error "Failed to find clang compiler. Make sure to install it and that it has been added to the path"
+    exit %ERRORLEVEL%
+  )
 exit /B 0
 
 rem build library dll in debug mode for now
@@ -56,9 +60,9 @@ rem parameter2: library name
   rem -Wextra: more warnings
   rem -Wpedantic: all warnings demaded by strict ISO C and ISO C++
   @REM set compiler_flags=-shared -g -Werror -Weverything
-  set compiler_flags=-shared -g -Werror -Wvarargs -Wall -Wextra
-  set include_flags=-Isrc
-  set linker_flags=-luser32
+  set compiler_flags=-shared -g -Werror -Wall -Wextra
+  set include_flags=-Isrc -I%VULKAN_SDK%\Include
+  set linker_flags=-L%VULKAN_SDK%\Lib -luser32  -lvulkan-1
   set defines=-DMIRAI_DEBUG=1 -DMIRAI_RELEASE=0 -DMIRAI_EXPORT=1 -DMIRAI_IMPORT=0
 
   clang %c_filenames% %compiler_flags% -o %build_dir%%name%.dll %defines% %include_flags% %linker_flags%
@@ -98,7 +102,7 @@ rem parameter2: executalble name
   )
 
   @REM set compiler_flags=-g -Werror -Weverything
-  set compiler_flags=-g -Werror -Wvarargs -Wall -Wextra
+  set compiler_flags=-g -Werror -Wall -Wextra
   set include_flags=-Isrc -I../engine/src
   set linker_flags=-L%build_dir% -lengine.lib
   set defines=-DMIRAI_DEBUG=1 -DMIRAI_RELEASE=0 -DMIRAI_EXPORT=0 -DMIRAI_IMPORT=1
@@ -117,13 +121,62 @@ rem parameter2: executalble name
   popd & endlocal
 exit /B 0
 
+
+rem output Vulkan SDK path
+:vulkan_sdk_path
+  if "%VULKAN_SDK%" == "" (
+    call :echo_error "Failed to find Vulkan SDK. Make sure to install it."
+    exit 1
+  )
+  echo %VULKAN_SDK%
+  %VULKAN_SDK%\Bin\glslc.exe --version
+exit /B 0
+
+rem compile glsl shaders folder into spir-v
+rem parameter1: glsl shaders directory
+:glsl_compile
+  setlocal enabledelayedexpansion
+
+  call :timer_begin
+
+  set folder=%~1
+  set compile_dir=..\spv\
+  if not exist %compile_dir% mkdir %compile_dir%
+
+  pushd %folder%
+  echo %folder%
+
+  set glsl_filenames=
+  for /R %%f in (*.glsl.vert *glsl.frag) do (
+    echo   %%f
+    set glsl_filenames=!glsl_filenames! %%f
+    rem %%~nxf get file name with extension from full file path
+    rem   n: filename
+    rem   x: file extension
+    call %VULKAN_SDK%/Bin/glslc.exe %%f -Werror -o %compile_dir%%%~nxf.spv
+    rem don't know why should I use !ERRORLEVEL! instead of %ERRORLEVEL%
+    if !ERRORLEVEL! neq 0 (
+      call :echo_error "Failed to compile %%f with exit code !ERRORLEVEL!"
+      exit !ERRORLEVEL!
+    )
+  )
+
+  call :timer_end total_seconds
+  call :echo_success "Compile glsl shaders Succeeded (compile time: %total_seconds%s)"
+  REM empty line
+  echo.
+
+  popd & endlocal
+exit /B 0
+
+
 rem echo error message as error and color it in red
 rem parameter1: message
 :echo_error
   setlocal
   rem reference for colors: https://stackoverflow.com/a/38617204
   set NOCOLOR=[0m
-  set RED=91m
+  set RED=[91m
   echo %RED%Error: %~1%NOCOLOR%
   endlocal
 exit /B 0
@@ -147,6 +200,7 @@ rem parameter1: message
   echo %GREEN%%~1%NOCOLOR%
   endlocal
 exit /B 0
+
 
 rem begin time calculation
 :timer_begin
