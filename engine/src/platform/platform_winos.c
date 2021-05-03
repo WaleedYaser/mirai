@@ -302,22 +302,32 @@ void
 mp_console_write(const char *message, MP_COLOR color)
 {
     HANDLE console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    CONSOLE_SCREEN_BUFFER_INFO info = {0};
+    GetConsoleScreenBufferInfo(console_handle, &info);
+
     SetConsoleTextAttribute(console_handle, _mp_color_to_u8(color));
     OutputDebugStringA(message);
     u64 length = strnlen(message, 2 * 1024);
     WriteConsoleA(console_handle, message, (DWORD)length, NULL, NULL);
-    SetConsoleTextAttribute(console_handle, 0);
+
+    SetConsoleTextAttribute(console_handle, info.wAttributes);
 }
 
 void
 mp_console_write_error(const char *message, MP_COLOR color)
 {
     HANDLE console_handle = GetStdHandle(STD_ERROR_HANDLE);
+
+    CONSOLE_SCREEN_BUFFER_INFO info = {0};
+    GetConsoleScreenBufferInfo(console_handle, &info);
+
     SetConsoleTextAttribute(console_handle, _mp_color_to_u8(color));
     OutputDebugStringA(message);
     u64 length = strnlen(message, 2 * 1024);
     WriteConsoleA(console_handle, message, (DWORD)length, NULL, NULL);
-    SetConsoleTextAttribute(console_handle, 0);
+
+    SetConsoleTextAttribute(console_handle, info.wAttributes);
 }
 
 #endif

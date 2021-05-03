@@ -64,15 +64,8 @@ main(void)
     MC_INFO("window created with title: '%s', width: %d, and height: %d",
         window->title, window->width, window->height);
 
-    if (!mg_create())
-    {
-        MC_FATAL("failed to initialize mirai gfx");
-        return 1;
-    }
-    MC_INFO("mirai gfx initialized successfully");
-
     void *window_handle = mp_window_native_handle(window);
-    MG_Swapchain *swapchain = mg_swapchain_create(window_handle);
+    Mirai_Gfx gfx = mg_create(window_handle);
 
     // game loop
     b8 running = TRUE;
@@ -152,12 +145,10 @@ main(void)
             }
         }
 
-        mg_swapchain_present(swapchain);
+        mg_test_draw(gfx);
     }
 
-    mg_swapchain_destroy(swapchain);
-    mg_destroy();
-    MC_INFO("mirai gfx destoyed");
+    mg_destroy(gfx);
     mp_window_destroy(window);
     MC_INFO("window closed");
 
