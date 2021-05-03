@@ -65,10 +65,19 @@ main(void)
         window->title, window->width, window->height);
 
     MP_Binary_Data vs = mp_read_file("spv/triangle.glsl.vert.spv");
-    MP_Binary_Data ps = mp_read_file("spv/triangle.glsl.frag.spv");
+    MP_Binary_Data fs = mp_read_file("spv/triangle.glsl.frag.spv");
 
     void *window_handle = mp_window_native_handle(window);
-    Mirai_Gfx gfx = mg_create(window_handle, vs.data, vs.size, ps.data, ps.size);
+    Mirai_Gfx gfx = mg_create();
+    MG_Swapchain swapchain = mg_swapchain_create(gfx, window_handle);
+    MG_Pass pass = mg_pass_create(gfx, swapchain);
+    MG_Pipeline pipeline = mg_pipeline_create(gfx, (MG_Pipeline_Desc){
+        .pass = pass,
+        .vs_code = vs.data,
+        .vs_code_size = vs.size,
+        .fs_code = fs.data,
+        .fs_code_size = fs.size
+    });
 
     // game loop
     b8 running = TRUE;
@@ -138,6 +147,13 @@ main(void)
                     MC_TRACE("window resize: %d, %d",
                         window->last_event.window_resize.width,
                         window->last_event.window_resize.height);
+
+                    mg_swapchain_destroy(gfx, swapchain);
+                    swapchain = mg_swapchain_create(gfx, window_handle);
+
+                    mg_pass_destroy(gfx, pass);
+                    pass = mg_pass_create(gfx, swapchain);
+
                     break;
                 case MP_WINDOW_EVENT_TYPE_WINDOW_CLOSE:
                     running = FALSE;
@@ -148,9 +164,15 @@ main(void)
             }
         }
 
-        mg_test_draw(gfx);
+        mg_pass_begin(gfx, pass, swapchain);
+        mg_pass_draw(gfx, pass, pipeline, 3);
+        mg_pass_end(gfx, pass, swapchain);
+        mg_swapchain_present(gfx, swapchain);
     }
 
+    mg_pipeline_destroy(gfx, pipeline);
+    mg_pass_destroy(gfx, pass);
+    mg_swapchain_destroy(gfx, swapchain);
     mg_destroy(gfx);
     mp_window_destroy(window);
     MC_INFO("window closed");
